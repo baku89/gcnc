@@ -1,4 +1,3 @@
-import {isNode} from 'browser-or-node'
 import fromCallback from 'p-from-callback'
 
 const withResolvers = function <T>() {
@@ -62,69 +61,58 @@ export async function createNodeSerial(
 	})
 }
 
-export async function countTotalLines(filePath: string) {
-	const fs = await import('node:fs')
-	const readline = await import('node:readline')
+export type GCodeSource = () => Promise<{
+	[Symbol.asyncIterator](): AsyncIterableIterator<string>
+	close?(): void
+}>
 
-	// Open the file as a stream
-	let fileStream = fs.createReadStream(filePath)
-	const rl = readline.createInterface({
-		input: fileStream,
-		crlfDelay: Infinity,
-	})
-
+export async function countTotalLines(source: GCodeSource): Promise<number> {
 	let totalLines = 0
-	for await (const _ of rl) {
+	const reader = await source()
+	for await (const _ of reader) {
 		totalLines++
 	}
+	reader.close?.()
 
 	return totalLines
 }
 
 /**
  * Send G-code commands to a CNC machine.
- * @param filePath Path to the G-code file (Node.js only, ignored in browser)
+ * @param source Source of G-code commands. Can be a string or function that returns a writable stream.
  * @param portName Serial port to use (Node.js only, ignored in browser)
  */
 export async function sendGCode(
-	filePath: string,
+	source: GCodeSource,
 	portName: string
 ): Promise<void> {
 	let serial: WritableStream<string>
 
-	if (isNode) {
-		const fs = await import('node:fs')
-		const readline = await import('node:readline')
+	const totalLines = await countTotalLines(source)
 
-		const totalLines = await countTotalLines(filePath)
-		const digits = totalLines.toString().length
+	console.log(`Total lines: ${totalLines}`)
 
-		serial = await createNodeSerial(portName)
-		const writer = serial.getWriter()
+	const digits = totalLines.toString().length
 
-		// Open the file as a stream
-		let fileStream = fs.createReadStream(filePath, {encoding: 'utf-8'})
-		const rl = readline.createInterface({
-			input: fileStream,
-			crlfDelay: Infinity,
-		})
+	serial = await createNodeSerial(portName)
+	const writer = serial.getWriter()
 
-		console.log('Sending G-code...')
+	console.log('Sending G-code...')
+	const reader = await source()
 
-		let currentLine = 0
-		for await (const line of rl) {
-			currentLine++
-			await writer.write(line)
+	let currentLine = 0
+	for await (const line of reader) {
+		currentLine++
+		await writer.write(line)
 
-			console.log(
-				`${currentLine.toString().padStart(digits)}/${totalLines}: ${line}`
-			)
-		}
-		rl.close()
-	} else {
-		throw new Error('Not yet implemented')
+		console.log(
+			`${currentLine.toString().padStart(digits)}/${totalLines}: ${line}`
+		)
 	}
 
+	reader.close?.()
+	writer.releaseLock()
 	await serial.close()
+
 	console.log('Finished sending G-code.')
 }
