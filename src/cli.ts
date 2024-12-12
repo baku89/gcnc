@@ -33,10 +33,20 @@ const source: GCodeSource = async () => {
 		crlfDelay: Infinity,
 	})
 
+	// Skip lines if requested
+	if (argv.linenumber) {
+		let currentLine = 0
+		for await (const _ of rl) {
+			if (++currentLine >= argv.linenumber) {
+				break
+			}
+		}
+	}
+
 	return rl
 }
 
-await sendGCode(source, argv.port)
+await sendGCode(source, argv.port, (argv.linenumber ?? 1) - 1)
 
 // Quit the process after sending the G-code
 process.exit(0)

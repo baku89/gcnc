@@ -84,11 +84,12 @@ export async function countTotalLines(source: GCodeSource): Promise<number> {
  */
 export async function sendGCode(
 	source: GCodeSource,
-	portName: string
+	portName: string,
+	skippedLines = 0
 ): Promise<void> {
 	let serial: WritableStream<string>
 
-	const totalLines = await countTotalLines(source)
+	const totalLines = (await countTotalLines(source)) + skippedLines
 
 	console.log(`Total lines: ${totalLines}`)
 
@@ -100,7 +101,7 @@ export async function sendGCode(
 	console.log('Sending G-code...')
 	const reader = await source()
 
-	let currentLine = 0
+	let currentLine = skippedLines
 	for await (const line of reader) {
 		currentLine++
 		await writer.write(line)
