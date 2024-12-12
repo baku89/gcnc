@@ -22,7 +22,7 @@ export async function createNodeSerial(
 		autoOpen: false,
 	})
 
-	const queues: ReturnType<typeof withResolvers<void>>['resolve'][] = []
+	const queues: Exclude<ReturnType<typeof withResolvers<void>>, 'reject'>[] = []
 
 	port.on('data', (data: Buffer) => {
 		const responses = data
@@ -31,7 +31,7 @@ export async function createNodeSerial(
 			.filter(line => line.trim() === 'ok')
 
 		for (const _ of responses) {
-			queues.shift()?.()
+			queues.shift()?.resolve()
 		}
 	})
 
@@ -44,19 +44,26 @@ export async function createNodeSerial(
 	return new WritableStream<string>({
 		write: async (line: string) => {
 			const {promise, resolve, reject} = withResolvers<void>()
+
 			const err = await fromCallback<Error | null | undefined>(cb =>
 				port.write(`${line}\n`, cb)
 			)
 
 			if (err) {
 				reject(err)
+			} else {
+				queues.push({promise, resolve, reject})
 			}
-
-			queues.push(resolve)
 
 			return promise
 		},
-		close: async () => {},
+		close: async () => {
+			while (queues.length > 0) {
+				await queues[0].promise
+			}
+			// Close the port
+			await fromCallback<void>(cb => port.close(cb))
+		},
 		abort() {},
 	})
 }
