@@ -1,0 +1,59 @@
+{
+	"name": "gcnc",
+	"version": "0.0.0",
+	"description": "Stream-based G-code sender",
+	"main": "./lib/cjs/index.js",
+	"module": "./lib/esm/index.js",
+	"type": "module",
+	"types": "./lib/esm/index.d.ts",
+	"sideEffects": false,
+	"scripts": {
+		"dev": "concurrently npm:dev:*",
+		"build": "tsc",
+		"lint": "eslint"
+	},
+	"bin": {
+		"gcnc": "lib/esm/cli.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/baku89/gcnc.git"
+	},
+	"keywords": [
+		"gcode",
+		"grbl",
+		"cnc",
+		"nc"
+	],
+	"author": "Baku Hashimoto <mail@baku89.com>",
+	"files": [
+		"lib"
+	],
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/baku89/gcnc/issues"
+	},
+	"homepage": "https://baku89.github.io/gcnc",
+	"devDependencies": {
+		"@types/node": "^22.10.2",
+		"@types/w3c-web-serial": "^1.0.7",
+		"@types/yargs": "^17.0.33",
+		"@typescript-eslint/eslint-plugin": "^8.6.0",
+		"@typescript-eslint/parser": "^8.6.0",
+		"camelcase": "^8.0.0",
+		"concurrently": "^9.0.1",
+		"eslint": "^9.10.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-plugin-simple-import-sort": "^12.1.1",
+		"eslint-plugin-unused-imports": "^4.1.4",
+		"p-from-callback": "^2.0.0",
+		"prettier": "^3.3.3",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.6.2"
+	},
+	"dependencies": {
+		"browser-or-node": "^3.0.0",
+		"serialport": "^12.0.0",
+		"yargs": "^17.7.2"
+	}
+}
