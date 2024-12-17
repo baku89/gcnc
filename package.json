@@ -2,10 +2,9 @@
 	"name": "gcnc",
 	"version": "0.0.0",
 	"description": "Stream-based G-code sender",
-	"main": "./lib/cjs/index.js",
-	"module": "./lib/esm/index.js",
+	"module": "./lib/index.js",
 	"type": "module",
-	"types": "./lib/esm/index.d.ts",
+	"types": "./lib/index.d.ts",
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc",

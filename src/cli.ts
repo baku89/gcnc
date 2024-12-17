@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
-import yargs from 'yargs'
-import {hideBin} from 'yargs/helpers'
 import fs from 'node:fs'
 import readline from 'node:readline'
-import {SerialCNCDevice, GCodeSource} from './CNCDevice.js'
+
+import yargs from 'yargs'
+import {hideBin} from 'yargs/helpers'
+
+import {GCodeSource, SerialCNCDevice} from './CNCDevice.js'
 import {countTotalLines} from './util.js'
 
 const argv = await yargs(hideBin(process.argv))
