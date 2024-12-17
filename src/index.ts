@@ -1,16 +1,6 @@
 import fromCallback from 'p-from-callback'
 
-const withResolvers = function <T>() {
-	let resolve: (value: T | PromiseLike<T>) => void
-	let reject: (reason?: any) => void
-
-	const promise = new Promise<T>((res, rej) => {
-		resolve = res
-		reject = rej
-	})
-
-	return {promise, resolve: resolve!, reject: reject!}
-}
+import {withResolvers} from './util'
 
 export async function createNodeSerial(
 	portName: string
@@ -94,15 +84,13 @@ export async function sendGCode(
 	portName: string,
 	skippedLines = 0
 ): Promise<void> {
-	let serial: WritableStream<string>
-
+	const serial = await createNodeSerial(portName)
 	const totalLines = (await countTotalLines(source)) + skippedLines
 
 	console.log(`Total lines: ${totalLines}`)
 
 	const digits = totalLines.toString().length
 
-	serial = await createNodeSerial(portName)
 	const writer = serial.getWriter()
 
 	console.log('Sending G-code...')

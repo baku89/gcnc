@@ -9,12 +9,13 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc",
+		"start": "npm run build && node lib/cli.js",
 		"lint": "eslint src",
 		"lint:fix": "eslint src --fix",
 		"format": "prettier --write ."
 	},
 	"bin": {
-		"gcnc": "lib/esm/cli.js"
+		"gcnc": "lib/cli.js"
 	},
 	"repository": {
 		"type": "git",

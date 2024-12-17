@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import {sendGCode, type GCodeSource} from './index.js'
 import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
 import fs from 'node:fs'
 import readline from 'node:readline'
+import {SerialCNCDevice, GCodeSource} from './CNCDevice.js'
+import {countTotalLines} from './util.js'
 
 const argv = await yargs(hideBin(process.argv))
 	.option('file', {
@@ -26,27 +27,33 @@ const argv = await yargs(hideBin(process.argv))
 	})
 	.help().argv
 
-const source: GCodeSource = async () => {
-	const fileStream = fs.createReadStream(argv.file, {encoding: 'utf-8'})
+const device = new SerialCNCDevice(argv.port)
+
+await device.open().catch(err => {
+	console.error(err)
+	process.exit(1)
+})
+
+const source = async (): Promise<GCodeSource> => {
+	const fileStream = fs.createReadStream(argv.file)
 	const rl = readline.createInterface({
 		input: fileStream,
 		crlfDelay: Infinity,
 	})
 
-	// Skip lines if requested
-	if (argv.linenumber) {
+	const generator = async function* () {
 		let currentLine = 0
-		for await (const _ of rl) {
-			if (++currentLine >= argv.linenumber) {
-				break
-			}
+		for await (const command of rl) {
+			yield {command, number: ++currentLine}
 		}
 	}
 
-	return rl
+	return generator()
 }
 
-await sendGCode(source, argv.port, (argv.linenumber ?? 1) - 1)
+const totalLines = await countTotalLines(await source())
+
+await device.sendLines(await source(), totalLines)
 
 // Quit the process after sending the G-code
 process.exit(0)
