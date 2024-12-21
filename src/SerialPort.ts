@@ -1,7 +1,10 @@
-import {withResolvers} from './util.js'
 import fromCallback from 'p-from-callback'
+import PQueue from 'p-queue'
+
+import {withResolvers} from './util.js'
 
 export interface SerialPortDevice {
+	get isOpen(): boolean
 	write(line: string): Promise<string>
 	close(): Promise<void>
 }
@@ -11,22 +14,37 @@ export async function createNodeSerialPort(
 	baudRate: number
 ): Promise<SerialPortDevice> {
 	const {SerialPort} = await import('serialport')
+	const readline = await import('node:readline')
+
 	const port = new SerialPort({
 		path: portName,
 		baudRate,
 		autoOpen: false,
 	})
 
-	const queues: ReturnType<typeof withResolvers<string>>[] = []
+	const queue = new PQueue({concurrency: 1})
+	let currentRequest: ReturnType<typeof withResolvers<string>> | null = null
 
-	port.on('data', (data: Buffer) => {
-		const responses = data
-			.toString()
-			.split('\n')
-			.filter(line => line.trim() !== '')
+	const rl = readline.createInterface({
+		input: port,
+		crlfDelay: Infinity,
+	})
 
-		for (const res of responses) {
-			queues.shift()?.resolve(res)
+	let pendingLines: string[] = []
+
+	rl.on('line', (line: string) => {
+		if (line === 'ok') {
+			// okが来たら、これまでの行を結合して返す
+			currentRequest?.resolve(pendingLines.join('\n'))
+			pendingLines = []
+			currentRequest = null
+		} else if (line.startsWith('error:')) {
+			currentRequest?.reject(new Error(line))
+			currentRequest = null
+			pendingLines = []
+		} else {
+			// okが来るまでの行を蓄積
+			pendingLines.push(line)
 		}
 	})
 
@@ -37,28 +55,32 @@ export async function createNodeSerialPort(
 	port.on('error', err => console.error(`Error: ${err.message}`))
 
 	return {
+		get isOpen() {
+			return port.isOpen
+		},
 		write: async (line: string) => {
-			const {promise, resolve, reject} = withResolvers<string>()
+			const request = withResolvers<string>()
 
-			const err = await fromCallback(cb =>
-				port.write(`${line}\n`, err => cb(undefined, err))
-			)
+			await queue.add(async () => {
+				currentRequest = request
 
-			if (err) {
-				reject(err)
-			} else {
-				queues.push({promise, resolve, reject})
-			}
+				const err = await fromCallback(cb => {
+					port.write(`${line}\n`, err => cb(undefined, err))
+				})
 
-			return promise
+				if (err) {
+					currentRequest = null
+					request.reject(err)
+				}
+
+				return request.promise
+			})
+
+			return request.promise
 		},
 		close: async () => {
 			// Wait for all pending writes to finish
-			while (queues.length > 0) {
-				await queues[0].promise
-				queues.shift()
-			}
-
+			await queue.onIdle()
 			await fromCallback<void>(cb => port.close(cb))
 		},
 	}

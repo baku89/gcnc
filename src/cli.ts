@@ -29,10 +29,11 @@ const argv = await yargs(hideBin(process.argv))
 	})
 	.help().argv
 
-const device = new SerialCNCDevice(argv.port)
+const device = new SerialCNCDevice(argv.port, {checkStatusInterval: 100})
 
 await device.open().catch(err => {
-	console.error(err)
+	const msg = err instanceof Error ? err.message : 'Unknown error'
+	console.error(`Cannot open serial port ${argv.port}: ${msg}`)
 	process.exit(1)
 })
 
