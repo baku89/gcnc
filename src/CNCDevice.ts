@@ -1,3 +1,4 @@
+import {parseGrblStatus} from './parseGrblStatus.js'
 import {createNodeSerialPort, SerialPortDevice} from './SerialPort.js'
 
 interface GCodeLine {
@@ -33,11 +34,15 @@ export abstract class CNCDevice {
 
 interface SerialGrblCNCOptions {
 	baudRate?: number
+	checkCoordinateInterval?: number
 }
 
 export class SerialCNCDevice extends CNCDevice {
 	readonly portName: string
 	readonly baudRate: number
+
+	readonly checkCoordinateInterval: number
+	private checkCoordinateIntervalId?: NodeJS.Timeout
 
 	private device?: SerialPortDevice
 
@@ -46,14 +51,23 @@ export class SerialCNCDevice extends CNCDevice {
 
 		this.portName = port
 		this.baudRate = options.baudRate ?? 115200
+		this.checkCoordinateInterval = options.checkCoordinateInterval ?? 250
 	}
 
 	async open() {
 		this.device = await createNodeSerialPort(this.portName, this.baudRate)
+
+		this.checkCoordinateIntervalId = setInterval(async () => {
+			const status = await this.send('?')
+			console.log('Status:', [status])
+			const parsed = parseGrblStatus(status)
+			console.warn(parsed)
+		}, this.checkCoordinateInterval)
 	}
 
 	async close() {
 		await this.device?.close()
+		clearInterval(this.checkCoordinateIntervalId)
 	}
 
 	async send(line: string) {

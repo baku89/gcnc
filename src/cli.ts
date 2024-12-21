@@ -32,7 +32,11 @@ const argv = await yargs(hideBin(process.argv))
 const device = new SerialCNCDevice(argv.port)
 
 await device.open().catch(err => {
-	console.error(err)
+	if (err instanceof Error) {
+		console.error(`Cannot open serial port ${argv.port}: ${err.message}`)
+	} else {
+		console.error(err)
+	}
 	process.exit(1)
 })
 
