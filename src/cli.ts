@@ -92,10 +92,18 @@ const source = async (preventSkip = false): Promise<GCodeSource> => {
 
 const totalLines = await countTotalLines(await source(true))
 
-device.on('sent', (_, {number}) => {
-	fileCache.setLastLine(fileHash, argv.port, number)
-	fileCache.save().catch(console.error)
+device.on('sent', ({command}, {number}) => {
+	if (command === 'G0') {
+		fileCache.setLastLine(fileHash, argv.port, number)
+		fileCache.save().catch(console.error)
+	}
 })
+
+// If the messaging starts from the middle of the file,
+// send G90 to set the absolute mode
+if (startLine > 1) {
+	await device.send('G90')
+}
 
 await device.sendLines(await source(), totalLines)
 
