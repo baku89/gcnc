@@ -38,7 +38,7 @@ const argv = await yargs(hideBin(process.argv))
 
 const osc = new OSC({
 	plugin: new OSC.DatagramPlugin({
-		// @ts-expect-error: osc-js is not typed
+		// @ts-expect-error: osc-js is not typed correctly
 		send: {port: argv.oscPort},
 	}),
 })
