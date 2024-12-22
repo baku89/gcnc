@@ -932,6 +932,13 @@ optionator@^0.9.3:
     type-check "^0.4.0"
     word-wrap "^1.2.5"
 
+osc-js@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/osc-js/-/osc-js-2.4.1.tgz#4f6b72307ab0dfa7e41b43dd7f667d57aaee1650"
+  integrity sha512-QlSeRKJclL47FNvO1MUCAAp9frmCF9zcYbnf6R9HpcklAst8ZyX3ISsk1v/Vghr/5GmXn0bhVjFXF9h+hfnl4Q==
+  dependencies:
+    ws "^8.16.0"
+
 p-from-callback@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/p-from-callback/-/p-from-callback-2.0.0.tgz#045e8ffbcdb0acdf73ff8a079e164449bb7ead85"
@@ -1158,6 +1165,11 @@ wrap-ansi@^7.0.0:
     ansi-styles "^4.0.0"
     string-width "^4.1.0"
     strip-ansi "^6.0.0"
+
+ws@^8.16.0:
+  version "8.18.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.0.tgz#0d7505a6eafe2b0e712d232b42279f53bc289bbc"
+  integrity sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==
 
 y18n@^5.0.5:
   version "5.0.8"
