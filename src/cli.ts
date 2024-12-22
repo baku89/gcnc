@@ -69,7 +69,7 @@ await device.open().catch(err => {
 	process.exit(1)
 })
 
-const source = async (): Promise<GCodeSource> => {
+const source = async (preventSkip = false): Promise<GCodeSource> => {
 	const fileStream = fs.createReadStream(argv.file)
 	const rl = readline.createInterface({
 		input: fileStream,
@@ -79,7 +79,7 @@ const source = async (): Promise<GCodeSource> => {
 	const generator = async function* () {
 		let currentLine = 1
 		for await (const text of rl) {
-			if (currentLine < startLine) {
+			if (currentLine < startLine && !preventSkip) {
 				currentLine++
 				continue
 			}
@@ -90,7 +90,7 @@ const source = async (): Promise<GCodeSource> => {
 	return generator()
 }
 
-const totalLines = await countTotalLines(await source())
+const totalLines = await countTotalLines(await source(true))
 
 device.on('sent', (_, {number}) => {
 	fileCache.setLastLine(fileHash, argv.port, number)
