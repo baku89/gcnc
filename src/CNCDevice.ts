@@ -1,5 +1,6 @@
 import {EventEmitter} from 'eventemitter3'
 
+import {type GCode, parseGCode} from './parseGCode.js'
 import {type GrblStatus, parseGrblStatus} from './parseGrblStatus.js'
 import {createNodeSerialPort, SerialPortDevice} from './SerialPort.js'
 
@@ -12,6 +13,7 @@ export type GCodeSource = AsyncIterable<GCodeLine>
 
 interface CNCDeviceEvents {
 	status: (status: GrblStatus) => void
+	sent: (line: GCode) => void
 }
 
 export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
@@ -32,6 +34,13 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 			)
 
 			await this.send(command)
+
+			if (command.trim() !== '') {
+				const parsed = parseGCode(command)
+				if (parsed) {
+					this.emit('sent', parsed)
+				}
+			}
 		}
 
 		console.log('Finished sending G-code.')
