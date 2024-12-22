@@ -8,6 +8,7 @@ import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
 
 import {SerialCNCDevice} from './CNCDevice.js'
+import {FileCache} from './FileCache.js'
 import {type GCodeSource} from './type.js'
 import {countTotalLines} from './util.js'
 
@@ -52,6 +53,15 @@ osc.on('open', () => {
 osc.open()
 
 const device = new SerialCNCDevice(argv.port, {checkStatusInterval: 50})
+const fileCache = new FileCache()
+await fileCache.load()
+
+const fileHash = await fileCache.getFileHash(argv.file)
+const startLine = argv.linenumber ?? fileCache.getLastLine(fileHash, argv.port)
+
+if (startLine > 1) {
+	console.log(`Resuming from line ${startLine}`)
+}
 
 await device.open().catch(err => {
 	const msg = err instanceof Error ? err.message : 'Unknown error'
@@ -67,9 +77,13 @@ const source = async (): Promise<GCodeSource> => {
 	})
 
 	const generator = async function* () {
-		let currentLine = 0
+		let currentLine = 1
 		for await (const text of rl) {
-			yield {text, number: ++currentLine}
+			if (currentLine < startLine) {
+				currentLine++
+				continue
+			}
+			yield {text, number: currentLine++}
 		}
 	}
 
@@ -77,6 +91,11 @@ const source = async (): Promise<GCodeSource> => {
 }
 
 const totalLines = await countTotalLines(await source())
+
+device.on('sent', (_, {number}) => {
+	fileCache.setLastLine(fileHash, argv.port, number)
+	fileCache.save().catch(console.error)
+})
 
 await device.sendLines(await source(), totalLines)
 
