@@ -1,57 +1,4 @@
-interface GrblPosition {
-	x: number
-	y?: number
-	z?: number
-	a?: number
-	b?: number
-	c?: number
-}
-
-export interface GrblStatus {
-	// Idle, Run, Hold, Jog, Alarm, Door, Check, Home, Sleep
-	state: string
-	// Hold:0, Hold:1, Door:0-3 などのサブステート
-	subState?: number
-	// 機械座標系の位置
-	position: GrblPosition
-	// 作業座標系のオフセット
-	workCoordOffset?: GrblPosition
-	// 送り速度(mm/min or inch/min)
-	feedRate: number
-	// 主軸回転数(RPM)
-	spindleSpeed: number
-	// バッファの状態
-	buffer?: {
-		planner: number // プランナーバッファの空きブロック数
-		rx: number // シリアルRXバッファの空きバイト数
-	}
-	// 実行中の行番号
-	lineNumber?: number
-	// オーバーライド値(%)
-	override?: {
-		feed: number
-		rapid: number
-		spindle: number
-	}
-	// 入力ピンの状態
-	pins?: {
-		limitX: boolean // X軸リミット
-		limitY: boolean // Y軸リミット
-		limitZ: boolean // Z軸リミット
-		probe: boolean // プローブ
-		door: boolean // ドア
-		hold: boolean // ホールド
-		reset: boolean // ソフトリセット
-		start: boolean // サイクルスタート
-	}
-	// アクセサリの状態
-	accessories?: {
-		spindleCW: boolean // 主軸CW回転
-		spindleCCW: boolean // 主軸CCW回転
-		flood: boolean // クーラント(フラッド)
-		mist: boolean // クーラント(ミスト)
-	}
-}
+import {AxesPosition, type GrblStatus} from './type.js'
 
 export function parseGrblStatus(line: string): GrblStatus {
 	// <Run|MPos:200.000,31.070,0.000,0.000|FS:5000,0>
@@ -119,7 +66,7 @@ function parseState(state: string): GrblStatus {
 	}
 }
 
-function parsePosition(pos: string): GrblPosition {
+function parsePosition(pos: string): AxesPosition {
 	const [x, y, z, a, b, c] = pos.split(',').map(Number)
 	return {
 		x,

@@ -1,17 +1,4 @@
-export interface GCode {
-	/**
-	 * The command to send to the CNC machine.
-	 * e.g. `G0`, `G1`, `G90`, `G91`, etc.
-	 */
-	command: string
-	x?: number
-	y?: number
-	z?: number
-	a?: number
-	b?: number
-	c?: number
-	feedRate?: number
-}
+import {type GCode} from './type.js'
 
 export function parseGCode(line: string): GCode | null {
 	const [command, ...args] = line.split(/\s+/)
