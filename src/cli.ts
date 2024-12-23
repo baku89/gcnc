@@ -7,6 +7,7 @@ import OSC from 'osc-js'
 import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
 
+import {bindWithOSC} from './bindWithOSC.js'
 import {SerialCNCDevice} from './CNCDevice.js'
 import {FileCache} from './FileCache.js'
 import {type GCodeSource} from './type.js'
@@ -35,12 +36,17 @@ const argv = await yargs(hideBin(process.argv))
 		type: 'number',
 		description: 'OSC port to send to',
 	})
+	.option('osc-host', {
+		default: 'localhost',
+		type: 'string',
+		description: 'OSC host to send to',
+	})
 	.help().argv
 
 const osc = new OSC({
 	plugin: new OSC.DatagramPlugin({
 		// @ts-expect-error: osc-js is not typed correctly
-		send: {port: argv.oscPort},
+		send: {port: argv.oscPort, host: argv.oscHost},
 	}),
 })
 
@@ -49,6 +55,8 @@ console.log(`Launching OSC server on port ${argv.oscPort}`)
 osc.on('open', () => {
 	console.log(`OSC server is running on port ${argv.oscPort}`)
 })
+
+// await new Promise<void>(resolve => osc.on('open', resolve))
 
 osc.open()
 
@@ -68,6 +76,8 @@ await device.open().catch(err => {
 	console.error(`Cannot open serial port ${argv.port}: ${msg}`)
 	process.exit(1)
 })
+
+bindWithOSC(device, osc)
 
 const source = async (preventSkip = false): Promise<GCodeSource> => {
 	const fileStream = fs.createReadStream(argv.file)
