@@ -41,6 +41,11 @@ const argv = await yargs(hideBin(process.argv))
 		type: 'string',
 		description: 'OSC host to send to',
 	})
+	.option('loop', {
+		default: false,
+		type: 'boolean',
+		description: 'Loop the G-code file',
+	})
 	.help().argv
 
 const osc = new OSC({
@@ -109,13 +114,19 @@ device.on('sent', ({command}, {number}) => {
 	}
 })
 
-// If the messaging starts from the middle of the file,
-// send G90 to set the absolute mode
-if (startLine > 1) {
-	await device.send('G90')
-}
+// Send the initial commands
+await device.send('$X')
+await device.send('G90')
+await device.send('G0 Z0')
+await device.send('$H')
 
-await device.sendLines(await source(), totalLines)
+if (argv.loop) {
+	while (true) {
+		await device.sendLines(await source(), totalLines)
+	}
+} else {
+	await device.sendLines(await source(), totalLines)
+}
 
 // Quit the process after sending the G-code
 process.exit(0)
