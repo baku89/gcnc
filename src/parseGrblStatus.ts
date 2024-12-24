@@ -2,7 +2,7 @@ import {AxesPosition, type GrblStatus} from './type.js'
 
 export function parseGrblStatus(line: string): GrblStatus {
 	// <Run|MPos:200.000,31.070,0.000,0.000|FS:5000,0>
-	const match = line.match(/^<(.+)>$/)
+	const match = line.trim().match(/^<(.+)>$/)
 	if (!match) {
 		console.error([line])
 		throw new Error(`Invalid status format. Got: ${line}`)
