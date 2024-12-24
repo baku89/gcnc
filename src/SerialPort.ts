@@ -42,6 +42,9 @@ export async function createNodeSerialPort(
 			currentRequest?.reject(new Error(line))
 			currentRequest = null
 			pendingLines = []
+		} else if (line.startsWith('[')) {
+			// 完全に無視
+			return
 		} else {
 			// okが来るまでの行を蓄積
 			pendingLines.push(line)

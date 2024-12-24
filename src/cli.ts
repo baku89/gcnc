@@ -3,6 +3,7 @@
 import fs from 'node:fs'
 import readline from 'node:readline'
 
+import {scalar} from 'linearly'
 import OSC from 'osc-js'
 import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
@@ -46,6 +47,11 @@ const argv = await yargs(hideBin(process.argv))
 		type: 'boolean',
 		description: 'Loop the G-code file',
 	})
+	.option('doze-off', {
+		default: false,
+		type: 'boolean',
+		description: 'Turn off the doze-ooff mode',
+	})
 	.help().argv
 
 const osc = new OSC({
@@ -84,6 +90,16 @@ await device.open().catch(err => {
 
 bindWithOSC(device, osc)
 
+function dozeOff(duration: number): Promise<void> {
+	return new Promise(resolve => {
+		setTimeout(resolve, duration)
+	})
+}
+
+function calculateDozeOffInterval(): number {
+	return Math.round(scalar.lerp(500, 2000, Math.random()))
+}
+
 const source = async (preventSkip = false): Promise<GCodeSource> => {
 	const fileStream = fs.createReadStream(argv.file)
 	const rl = readline.createInterface({
@@ -91,13 +107,25 @@ const source = async (preventSkip = false): Promise<GCodeSource> => {
 		crlfDelay: Infinity,
 	})
 
+	// 2000行に一度、ウトウトする
+
 	const generator = async function* () {
 		let currentLine = 1
+
+		let dozeOffCount = calculateDozeOffInterval()
+
 		for await (const text of rl) {
 			if (currentLine < startLine && !preventSkip) {
 				currentLine++
 				continue
 			}
+
+			if (!preventSkip && --dozeOffCount <= 0) {
+				console.log('Dozing off')
+				await dozeOff(scalar.lerp(3000, 8000, Math.random()))
+				dozeOffCount = calculateDozeOffInterval()
+			}
+
 			yield {text, number: currentLine++}
 		}
 	}
@@ -115,10 +143,10 @@ device.on('sent', ({command}, {number}) => {
 })
 
 // Send the initial commands
+console.log('Sending initial commands')
 await device.send('$X')
 await device.send('G90')
 await device.send('G0 Z0')
-await device.send('$H')
 
 if (argv.loop) {
 	while (true) {
