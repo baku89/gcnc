@@ -46,8 +46,6 @@ export async function createNodeSerialPort(
 				currentRequest?.reject(pendingLines.join('\n'))
 				pendingLines = []
 				currentRequest = null
-			} else {
-				throw new Error(`Unexpected line: ${line}`)
 			}
 		}
 	})
