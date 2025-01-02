@@ -22,6 +22,12 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 
 	abstract send(line: string): Promise<string>
 
+	/**
+	 * Run the homing sequence.
+	 * @param axes The axes to home. If not specified, all axes will be homed.
+	 */
+	abstract home(axes?: string[]): Promise<void>
+
 	async sendLines(source: GCodeSource, totalLines?: number): Promise<void> {
 		console.log('Sending G-code...')
 
@@ -107,5 +113,15 @@ export class SerialCNCDevice extends CNCDevice {
 		}
 
 		return this.device.write(line)
+	}
+
+	async home(axes?: string[]) {
+		if (!axes) {
+			await this.send('$H')
+		} else {
+			for (const axis of axes) {
+				await this.send(`$H${axis.toUpperCase()}`)
+			}
+		}
 	}
 }
