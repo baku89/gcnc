@@ -2,7 +2,7 @@ import crypto from 'node:crypto'
 
 import fs from 'fs/promises'
 
-export const withResolvers = function <T>() {
+export const withResolvers = function <T = void>() {
 	let resolve: (value: T | PromiseLike<T>) => void
 	let reject: (reason?: unknown) => void
 

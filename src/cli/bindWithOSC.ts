@@ -7,7 +7,7 @@ export async function bindWithOSC(
 	device: CNCDevice,
 	{port, host}: {port: number; host: string}
 ) {
-	const {resolve, promise} = withResolvers<void>()
+	const {resolve, promise} = withResolvers()
 
 	const osc = new OSC({
 		plugin: new OSC.DatagramPlugin({
