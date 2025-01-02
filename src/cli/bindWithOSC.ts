@@ -1,11 +1,14 @@
 import OSC from 'osc-js'
 
 import {type CNCDevice} from '../CNCDevice.js'
+import {withResolvers} from '../util.js'
 
-export function bindWithOSC(
+export async function bindWithOSC(
 	device: CNCDevice,
 	{port, host}: {port: number; host: string}
 ) {
+	const {resolve, promise} = withResolvers<void>()
+
 	const osc = new OSC({
 		plugin: new OSC.DatagramPlugin({
 			// @ts-expect-error: osc-js is not typed correctly
@@ -13,10 +16,11 @@ export function bindWithOSC(
 		}),
 	})
 
-	console.log(`Launching OSC server on port ${port}`)
+	console.log(`Launching OSC server on port ${host}:${port}`)
 
 	osc.on('open', () => {
-		console.log(`OSC server is running on port ${host}`)
+		console.log(`OSC server is running on port ${host}:${port}`)
+		resolve()
 	})
 
 	osc.open()
@@ -61,4 +65,6 @@ export function bindWithOSC(
 		osc.send(new OSC.Message('/gcnc/sent/command', gcode.command))
 		osc.send(new OSC.Message('/gcnc/sent/feedRate', gcode.feedRate ?? 0))
 	})
+
+	return promise
 }

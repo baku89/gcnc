@@ -44,7 +44,7 @@ await device.open().catch(err => {
 })
 
 if (argv.oscPort) {
-	bindWithOSC(device, {port: argv.oscPort, host: argv.oscHost})
+	await bindWithOSC(device, {port: argv.oscPort, host: argv.oscHost})
 }
 
 if (argv.file) {
