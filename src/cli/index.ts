@@ -6,6 +6,7 @@ import {hideBin} from 'yargs/helpers'
 import {SerialCNCDevice} from '../CNCDevice.js'
 import {bindWithOSC} from './bindWithOSC.js'
 import {sendFromFile} from './sendFromFile.js'
+import {startRepl} from './startRepl.js'
 
 const argv = await yargs(hideBin(process.argv))
 	.option('file', {
@@ -53,6 +54,8 @@ if (argv.file) {
 		filePath: argv.file,
 		startLine: argv.linenumber,
 	})
+} else {
+	await startRepl(device)
 }
 
 // Quit the process after sending the G-code
