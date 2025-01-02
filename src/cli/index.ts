@@ -3,7 +3,7 @@
 import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
 
-import {SerialCNCDevice} from '../CNCDevice.js'
+import {SerialGrblCNCDevice} from '../CNCDevice.js'
 import {bindWithOSC} from './bindWithOSC.js'
 import {sendFromFile} from './sendFromFile.js'
 import {startRepl} from './startRepl.js'
@@ -36,7 +36,7 @@ const argv = await yargs(hideBin(process.argv))
 	})
 	.help().argv
 
-const device = new SerialCNCDevice(argv.port, {checkStatusInterval: 50})
+const device = new SerialGrblCNCDevice(argv.port, {checkStatusInterval: 50})
 
 await device.open().catch(err => {
 	const msg = err instanceof Error ? err.message : 'Unknown error'

@@ -68,7 +68,7 @@ interface SerialGrblCNCOptions {
 	checkStatusInterval?: number
 }
 
-export class SerialCNCDevice extends CNCDevice {
+export class SerialGrblCNCDevice extends CNCDevice {
 	readonly portName: string
 	readonly baudRate: number
 

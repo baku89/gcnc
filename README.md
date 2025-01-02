@@ -32,10 +32,10 @@ npm install gcnc
 ### Node.js
 
 ```typescript
-import {SerialCNCDevice} from 'gcnc'
+import {SerialGrblCNCDevice} from 'gcnc'
 
 // Create a new CNC device instance
-const device = new SerialCNCDevice('/dev/tty.usbserial-0001')
+const device = new SerialGrblCNCDevice('/dev/tty.usbserial-0001')
 
 // Open the connection
 await device.open()
@@ -57,11 +57,11 @@ await device.close()
 ### Browser (WebSerial)
 
 ```typescript
-import {WebSerialCNCDevice} from 'gcnc'
+import {WebSerialGrblCNCDevice} from 'gcnc'
 
 // Request port access from user
 const port = await navigator.serial.requestPort()
-const device = new WebSerialCNCDevice(port)
+const device = new WebSerialGrblCNCDevice(port)
 
 // Rest of the code is similar to Node.js example
 ```
