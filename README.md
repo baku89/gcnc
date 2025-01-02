@@ -1,4 +1,8 @@
-# Gcnc
+<div align="center">
+<img src="logo.svg" width="200" alt="logo">
+</div>
+
+<h1 align="center">Gcnc</h1>
 
 A universal G-code sender and CNC control library that works across different JavaScript environments and firmware types.
 
