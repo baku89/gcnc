@@ -1,12 +1,30 @@
 import OSC from 'osc-js'
 
-import {type CNCDevice} from './CNCDevice.js'
+import {type CNCDevice} from '../CNCDevice.js'
 
-export function bindWithOSC(device: CNCDevice, osc: OSC) {
+export function bindWithOSC(
+	device: CNCDevice,
+	{port, host}: {port: number; host: string}
+) {
+	const osc = new OSC({
+		plugin: new OSC.DatagramPlugin({
+			// @ts-expect-error: osc-js is not typed correctly
+			send: {port, host},
+		}),
+	})
+
+	console.log(`Launching OSC server on port ${port}`)
+
+	osc.on('open', () => {
+		console.log(`OSC server is running on port ${host}`)
+	})
+
+	osc.open()
+
 	device.on('status', status => {
 		if (!osc) return
 
-		// 軸位置の送信
+		// Send axis positions
 		const axes = [
 			status.position.x ?? 0,
 			status.position.y ?? 0,
@@ -18,18 +36,18 @@ export function bindWithOSC(device: CNCDevice, osc: OSC) {
 
 		osc.send(new OSC.Message('/gcnc/report/axes', ...axes))
 
-		// ステータスの送信
+		// Send status
 		osc.send(new OSC.Message('/gcnc/report/status', status.state))
 
-		// 送り速度の送信
+		// Send feed rate
 		osc.send(new OSC.Message('/gcnc/report/feedRate', status.feedRate ?? 0))
 	})
 
-	// Gコード送信時のハンドラ
+	// Handler for G-code transmission
 	device.on('sent', gcode => {
 		if (!osc) return
 
-		// 送信したコマンドの通知
+		// Notify sent command
 		const axes = [
 			gcode.x ?? 0,
 			gcode.y ?? 0,

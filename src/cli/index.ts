@@ -3,21 +3,22 @@
 import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
 
-import {bindWithOSC} from './cli/bindWithOSC.js'
-import {sendFromFile} from './cli/sendFromFile.js'
-import {SerialCNCDevice} from './CNCDevice.js'
+import {SerialCNCDevice} from '../CNCDevice.js'
+import {bindWithOSC} from './bindWithOSC.js'
+import {sendFromFile} from './sendFromFile.js'
 
 const argv = await yargs(hideBin(process.argv))
+	.option('file', {
+		alias: 'f',
+		type: 'string',
+		description: 'Path to the G-code file',
+		demandOption: true,
+	})
 	.option('port', {
 		alias: 'p',
 		type: 'string',
 		description: 'Serial port to use',
 		demandOption: true,
-	})
-	.option('file', {
-		alias: 'f',
-		type: 'string',
-		description: 'Path to the G-code file',
 	})
 	.option('linenumber', {
 		alias: 'n',
@@ -32,6 +33,16 @@ const argv = await yargs(hideBin(process.argv))
 		default: 'localhost',
 		type: 'string',
 		description: 'OSC host to send to',
+	})
+	.option('loop', {
+		default: false,
+		type: 'boolean',
+		description: 'Loop the G-code file',
+	})
+	.option('doze-off', {
+		default: false,
+		type: 'boolean',
+		description: 'Turn off the doze-ooff mode',
 	})
 	.help().argv
 

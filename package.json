@@ -8,13 +8,13 @@
 	"sideEffects": false,
 	"scripts": {
 		"build": "tsc",
-		"start": "npm run build && node lib/cli.js",
+		"start": "npm run build && node lib/cli/index.js",
 		"lint": "eslint src",
 		"lint:fix": "eslint src --fix",
 		"format": "prettier --write ."
 	},
 	"bin": {
-		"gcnc": "lib/cli.js"
+		"gcnc": "lib/cli/index.js"
 	},
 	"repository": {
 		"type": "git",
