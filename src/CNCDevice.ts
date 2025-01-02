@@ -87,9 +87,12 @@ export class SerialCNCDevice extends CNCDevice {
 		this.device = await createNodeSerialPort(this.portName, this.baudRate)
 
 		this.checkStatusIntervalId = setInterval(async () => {
-			const status = await this.send('?')
-			const parsed = parseGrblStatus(status)
-			this.emit('status', parsed)
+			const res = await this.send('?').catch(() => '')
+			if (res.endsWith('ok')) {
+				const [status] = res.split('\n')
+				const parsed = parseGrblStatus(status)
+				this.emit('status', parsed)
+			}
 		}, this.checkStatusInterval)
 	}
 

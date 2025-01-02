@@ -33,29 +33,27 @@ export async function createNodeSerialPort(
 	let pendingLines: string[] = []
 
 	rl.on('line', (line: string) => {
+		pendingLines.push(line)
+
 		if (line === 'ok') {
-			// okが来たら、これまでの行を結合して返す
+			// When 'ok' is received, join and return all pending lines
 			currentRequest?.resolve(pendingLines.join('\n'))
 			pendingLines = []
 			currentRequest = null
-		} else if (line.startsWith('error:')) {
-			currentRequest?.reject(new Error(line))
-			currentRequest = null
-			pendingLines = []
 		} else if (line.startsWith('[')) {
-			// 完全に無視
-			return
-		} else {
-			// okが来るまでの行を蓄積
-			pendingLines.push(line)
+			// Usually error messages start with '['. If the previous line starts with 'error:', treat as error
+			if (pendingLines.length > 0 && pendingLines[0].startsWith('error:')) {
+				currentRequest?.reject(pendingLines.join('\n'))
+				pendingLines = []
+				currentRequest = null
+			} else {
+				throw new Error(`Unexpected line: ${line}`)
+			}
 		}
 	})
 
 	await fromCallback<void>(cb => port.open(cb))
 	console.log(`Connected to ${portName}`)
-
-	// Error handling
-	port.on('error', err => console.error(`Error: ${err.message}`))
 
 	return {
 		get isOpen() {
