@@ -12,7 +12,6 @@ const argv = await yargs(hideBin(process.argv))
 		alias: 'f',
 		type: 'string',
 		description: 'Path to the G-code file',
-		demandOption: true,
 	})
 	.option('port', {
 		alias: 'p',
@@ -33,16 +32,6 @@ const argv = await yargs(hideBin(process.argv))
 		default: 'localhost',
 		type: 'string',
 		description: 'OSC host to send to',
-	})
-	.option('loop', {
-		default: false,
-		type: 'boolean',
-		description: 'Loop the G-code file',
-	})
-	.option('doze-off', {
-		default: false,
-		type: 'boolean',
-		description: 'Turn off the doze-ooff mode',
 	})
 	.help().argv
 
