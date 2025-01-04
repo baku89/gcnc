@@ -11,7 +11,11 @@
 		"start": "npm run build && node lib/cli/index.js",
 		"lint": "eslint src",
 		"lint:fix": "eslint src --fix",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"docs:dev": "nuxt dev docs",
+		"docs:build": "nuxt build docs",
+		"docs:generate": "nuxt generate docs",
+		"docs:preview": "nuxt preview docs"
 	},
 	"bin": {
 		"gcnc": "lib/cli/index.js"
@@ -37,6 +41,8 @@
 	"homepage": "https://baku89.github.io/gcnc",
 	"devDependencies": {
 		"@eslint/js": "^9.17.0",
+		"@nuxt-themes/docus": "^1.15.1",
+		"@nuxt/content": "^2.13.4",
 		"@types/node": "^22.10.2",
 		"@types/p-queue": "^3.2.1",
 		"@types/w3c-web-serial": "^1.0.7",
@@ -48,6 +54,7 @@
 		"eslint-plugin-simple-import-sort": "^12.1.1",
 		"eslint-plugin-unused-imports": "^4.1.4",
 		"globals": "^15.13.0",
+		"nuxt": "^3.15.0",
 		"p-from-callback": "^2.0.0",
 		"prettier": "^3.3.3",
 		"typescript": "^5.6.2",

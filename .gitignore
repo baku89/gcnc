@@ -29,3 +29,7 @@ lerna-debug.log*
 *.sw?
 
 .gcache
+
+# Nuxt
+.nuxt
+.output
