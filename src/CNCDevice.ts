@@ -2,7 +2,11 @@ import {EventEmitter} from 'eventemitter3'
 
 import {parseGCode} from './parseGCode.js'
 import {parseGrblStatus} from './parseGrblStatus.js'
-import {createNodeSerialPort, SerialPortDevice} from './SerialPort.js'
+import {
+	createNodeSerialPort,
+	createWebSerialPort,
+	SerialPortDevice,
+} from './SerialPort.js'
 import {
 	type GCode,
 	type GCodeSource,
@@ -68,29 +72,22 @@ interface SerialGrblCNCOptions {
 	checkStatusInterval?: number
 }
 
-export class SerialGrblCNCDevice extends CNCDevice {
-	readonly portName: string
+export abstract class CNCDeviceGrbl extends CNCDevice {
+	protected device?: SerialPortDevice
 	readonly baudRate: number
-
 	readonly checkStatusInterval: number
 	private checkStatusIntervalId?: NodeJS.Timeout
 
-	private device?: SerialPortDevice
-
-	/**
-	 * @param port The port name
-	 * @param options The options
-	 */
-	constructor(port: string, options: SerialGrblCNCOptions = {}) {
+	constructor(options: SerialGrblCNCOptions = {}) {
 		super()
-
-		this.portName = port
 		this.baudRate = options.baudRate ?? 115200
 		this.checkStatusInterval = options.checkStatusInterval ?? 250
 	}
 
+	abstract createSerialPort(): Promise<SerialPortDevice>
+
 	async open() {
-		this.device = await createNodeSerialPort(this.portName, this.baudRate)
+		this.device = await this.createSerialPort()
 
 		this.checkStatusIntervalId = setInterval(async () => {
 			const res = await this.send('?').catch(() => '')
@@ -108,10 +105,7 @@ export class SerialGrblCNCDevice extends CNCDevice {
 	}
 
 	async send(line: string) {
-		if (!this.device) {
-			throw new Error('Device not open')
-		}
-
+		if (!this.device) throw new Error('Device not open')
 		return this.device.write(line)
 	}
 
@@ -123,5 +117,31 @@ export class SerialGrblCNCDevice extends CNCDevice {
 				await this.send(`$H${axis.toUpperCase()}`)
 			}
 		}
+	}
+}
+
+export class CNCDeviceNodeSerialGrbl extends CNCDeviceGrbl {
+	readonly portName: string
+
+	constructor(portName: string, options: SerialGrblCNCOptions = {}) {
+		super(options)
+		this.portName = portName
+	}
+
+	async createSerialPort() {
+		return createNodeSerialPort(this.portName, this.baudRate)
+	}
+}
+
+export class CNCDeviceWebSerialGrbl extends CNCDeviceGrbl {
+	readonly port: SerialPort
+
+	constructor(port: SerialPort, options: SerialGrblCNCOptions = {}) {
+		super(options)
+		this.port = port
+	}
+
+	async createSerialPort() {
+		return createWebSerialPort(this.port, this.baudRate)
 	}
 }
