@@ -34,3 +34,36 @@ export async function getFileHash(filePath: string): Promise<string> {
 	const content = await fs.readFile(filePath)
 	return crypto.createHash('md5').update(content).digest('hex')
 }
+
+/**
+ * Return a generator that yields lines from the readable stream
+ */
+export async function* createLineStream(
+	reader: ReadableStreamDefaultReader<Uint8Array>
+): AsyncGenerator<string> {
+	const decoder = new TextDecoder()
+	let buffer = ''
+
+	try {
+		while (true) {
+			const {value, done} = await reader.read()
+			if (done) break
+
+			buffer += decoder.decode(value, {stream: true})
+			// Split on both \r\n and \n
+			const lines = buffer.split(/\r?\n/)
+			buffer = lines.pop() || ''
+
+			for (const line of lines) {
+				yield line
+			}
+		}
+	} finally {
+		reader.releaseLock()
+	}
+
+	// Process remaining buffer
+	if (buffer) {
+		yield buffer
+	}
+}
