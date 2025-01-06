@@ -1,9 +1,10 @@
 {
-	"extends": "../.nuxt/tsconfig.json",
+	"extends": "./.nuxt/tsconfig.json",
 	"compilerOptions": {
 		"paths": {
 			"gcnc": ["../src"],
 			"gcnc/*": ["../src/*"]
-		}
+		},
+		"typeRoots": ["../node_modules/@types"]
 	}
 }

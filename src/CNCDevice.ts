@@ -5,7 +5,7 @@ import {parseGrblStatus} from './parseGrblStatus.js'
 import {
 	createNodeSerialPort,
 	createWebSerialPort,
-	SerialPortDevice,
+	type SerialPortDevice,
 } from './SerialPort.js'
 import {
 	type GCode,
@@ -17,9 +17,14 @@ import {
 interface CNCDeviceEvents {
 	status: (status: GrblStatus) => void
 	sent: (gcode: GCode, line: GCodeSourceLine) => void
+	message: (message: string) => void
+	connected: () => void
+	disconnected: () => void
 }
 
 export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
+	abstract get isOpen(): boolean
+
 	abstract open(): Promise<void>
 
 	abstract close(): Promise<void>
@@ -86,27 +91,40 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 
 	abstract createSerialPort(): Promise<SerialPortDevice>
 
+	get isOpen() {
+		return this.device !== undefined
+	}
+
 	async open() {
 		this.device = await this.createSerialPort()
 
 		this.checkStatusIntervalId = setInterval(async () => {
-			const res = await this.send('?').catch(() => '')
+			const res = await this.send('?', false).catch(() => '')
 			if (res.endsWith('ok')) {
 				const [status] = res.split('\n')
 				const parsed = parseGrblStatus(status)
 				this.emit('status', parsed)
 			}
 		}, this.checkStatusInterval)
+
+		this.emit('connected')
 	}
 
 	async close() {
 		await this.device?.close()
+		this.device = undefined
 		clearInterval(this.checkStatusIntervalId)
+
+		this.emit('disconnected')
 	}
 
-	async send(line: string) {
+	async send(line: string, emitMessage = true) {
 		if (!this.device) throw new Error('Device not open')
-		return this.device.write(line)
+		const message = await this.device.write(line)
+		if (emitMessage) {
+			this.emit('message', message)
+		}
+		return message
 	}
 
 	async home(axes?: string[]) {

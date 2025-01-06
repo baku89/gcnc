@@ -57,6 +57,7 @@
 		"nuxt": "^3.15.0",
 		"p-from-callback": "^2.0.0",
 		"prettier": "^3.3.3",
+		"stylus": "^0.64.0",
 		"typescript": "^5.6.2",
 		"typescript-eslint": "^8.18.1"
 	},

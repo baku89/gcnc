@@ -1,10 +1,9 @@
 import fromCallback from 'p-from-callback'
 import PQueue from 'p-queue'
 
-import {withResolvers} from './util.js'
+import {createLineStream, withResolvers} from './util.js'
 
 export interface SerialPortDevice {
-	get isOpen(): boolean
 	write(line: string): Promise<string>
 	close(): Promise<void>
 }
@@ -53,9 +52,6 @@ export async function createNodeSerialPort(
 	console.log(`Connected to ${portName}`)
 
 	return {
-		get isOpen() {
-			return port.isOpen
-		},
 		write: async (line: string) => {
 			const request = withResolvers<string>()
 
@@ -88,58 +84,51 @@ export async function createWebSerialPort(
 	baudRate: number
 ): Promise<SerialPortDevice> {
 	const queue = new PQueue({concurrency: 1})
-	let currentRequest: ReturnType<typeof withResolvers<string>> | null = null
+	let currentRequest = null as ReturnType<typeof withResolvers<string>> | null
 	let pendingLines: string[] = []
 
 	await port.open({baudRate})
+
 	if (!port.writable || !port.readable) {
 		throw new Error('Port is not open')
 	}
 
 	const writer = port.writable.getWriter()
 	const reader = port.readable.getReader()
-	const decoder = new TextDecoder()
 
-	// バックグラウンドで読み取り続ける
+	const lines = createLineStream(reader)
+
+	// Read lines from the stream
 	;(async () => {
-		try {
-			while (true) {
-				const {value, done} = await reader.read()
-				if (done) break
+		for await (const line of lines) {
+			pendingLines.push(line)
 
-				const text = decoder.decode(value)
-				const lines = text.split('\n')
+			if (!currentRequest) {
+				continue
+			}
 
-				for (const line of lines) {
-					if (!line) continue
-					pendingLines.push(line)
-
-					if (line === 'ok') {
-						currentRequest!.resolve(pendingLines.join('\n'))
-						pendingLines = []
-						currentRequest = null
-					} else if (line.startsWith('error:')) {
-						currentRequest!.reject(new Error(pendingLines.join('\n')))
-						pendingLines = []
-						currentRequest = null
-					}
+			if (line === 'ok') {
+				currentRequest?.resolve(pendingLines.join('\n'))
+				pendingLines = []
+				currentRequest = null
+			} else if (line.startsWith('[')) {
+				if (pendingLines.length > 0 && pendingLines[0].startsWith('error:')) {
+					currentRequest?.reject(pendingLines.join('\n'))
+					pendingLines = []
+					currentRequest = null
 				}
 			}
-		} catch (err) {
-			currentRequest!.reject(err)
 		}
 	})()
 
+	const encoder = new TextEncoder()
+
 	return {
-		get isOpen() {
-			return port.readable !== null && port.writable !== null
-		},
 		write: async (line: string) => {
 			const request = withResolvers<string>()
 			currentRequest = request
 
 			await queue.add(async () => {
-				const encoder = new TextEncoder()
 				await writer.write(encoder.encode(line + '\n'))
 				return request.promise
 			})
