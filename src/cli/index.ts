@@ -3,7 +3,7 @@
 import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
 
-import {CNCDeviceNodeSerialGrbl} from '../CNCDevice.js'
+import {CNCDeviceNodeSerialGrbl} from '../CNCDeviceGrbl.js'
 import {bindWithOSC} from './bindWithOSC.js'
 import {sendFromFile} from './sendFromFile.js'
 import {startRepl} from './startRepl.js'

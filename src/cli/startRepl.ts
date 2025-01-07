@@ -15,6 +15,11 @@ export async function startRepl(device: CNCDevice) {
 
 	rl.prompt()
 
+	device.on('message', message => {
+		console.log(message)
+		rl.prompt()
+	})
+
 	// Detect Ctrl-X (Reset)
 	process.stdin.on('keypress', async (_, key) => {
 		if (key.ctrl && key.name === 'x') {
@@ -25,7 +30,7 @@ export async function startRepl(device: CNCDevice) {
 	})
 
 	rl.on('line', async input => {
-		const res = await device.send(input).catch(err => err)
+		const res = await device.send(input, false).catch(err => err)
 		console.log(res)
 		rl.prompt()
 	}).on('close', () => {

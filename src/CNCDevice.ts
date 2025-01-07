@@ -1,12 +1,6 @@
 import {EventEmitter} from 'eventemitter3'
 
 import {parseGCode} from './parseGCode.js'
-import {parseGrblStatus} from './parseGrblStatus.js'
-import {
-	createNodeSerialPort,
-	createWebSerialPort,
-	type SerialPortDevice,
-} from './SerialPort.js'
 import {
 	type GCode,
 	type GCodeSource,
@@ -29,7 +23,7 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 
 	abstract close(): Promise<void>
 
-	abstract send(line: string): Promise<string>
+	abstract send(line: string, emitMessage?: boolean): Promise<string>
 
 	/**
 	 * Run the homing sequence.
@@ -58,108 +52,5 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 		}
 
 		console.log('Finished sending G-code.')
-	}
-}
-
-interface SerialGrblCNCOptions {
-	/**
-	 * The baud rate to use.
-	 *
-	 * @default 115200
-	 */
-	baudRate?: number
-
-	/**
-	 * The interval to check the status report.
-	 *
-	 * @default 250
-	 */
-	checkStatusInterval?: number
-}
-
-export abstract class CNCDeviceGrbl extends CNCDevice {
-	protected device?: SerialPortDevice
-	readonly baudRate: number
-	readonly checkStatusInterval: number
-	private checkStatusIntervalId?: NodeJS.Timeout
-
-	constructor(options: SerialGrblCNCOptions = {}) {
-		super()
-		this.baudRate = options.baudRate ?? 115200
-		this.checkStatusInterval = options.checkStatusInterval ?? 250
-	}
-
-	abstract createSerialPort(): Promise<SerialPortDevice>
-
-	get isOpen() {
-		return this.device !== undefined
-	}
-
-	async open() {
-		this.device = await this.createSerialPort()
-
-		this.checkStatusIntervalId = setInterval(async () => {
-			const res = await this.send('?', false).catch(() => '')
-			if (res.endsWith('ok')) {
-				const [status] = res.split('\n')
-				const parsed = parseGrblStatus(status)
-				this.emit('status', parsed)
-			}
-		}, this.checkStatusInterval)
-
-		this.emit('connected')
-	}
-
-	async close() {
-		await this.device?.close()
-		this.device = undefined
-		clearInterval(this.checkStatusIntervalId)
-
-		this.emit('disconnected')
-	}
-
-	async send(line: string, emitMessage = true) {
-		if (!this.device) throw new Error('Device not open')
-		const message = await this.device.write(line)
-		if (emitMessage) {
-			this.emit('message', message)
-		}
-		return message
-	}
-
-	async home(axes?: string[]) {
-		if (!axes) {
-			await this.send('$H')
-		} else {
-			for (const axis of axes) {
-				await this.send(`$H${axis.toUpperCase()}`)
-			}
-		}
-	}
-}
-
-export class CNCDeviceNodeSerialGrbl extends CNCDeviceGrbl {
-	readonly portName: string
-
-	constructor(portName: string, options: SerialGrblCNCOptions = {}) {
-		super(options)
-		this.portName = portName
-	}
-
-	async createSerialPort() {
-		return createNodeSerialPort(this.portName, this.baudRate)
-	}
-}
-
-export class CNCDeviceWebSerialGrbl extends CNCDeviceGrbl {
-	readonly port: SerialPort
-
-	constructor(port: SerialPort, options: SerialGrblCNCOptions = {}) {
-		super(options)
-		this.port = port
-	}
-
-	async createSerialPort() {
-		return createWebSerialPort(this.port, this.baudRate)
 	}
 }

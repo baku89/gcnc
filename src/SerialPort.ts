@@ -1,10 +1,11 @@
 import fromCallback from 'p-from-callback'
 import PQueue from 'p-queue'
 
-import {createLineStream, withResolvers} from './util.js'
+import {createLineStream} from './util.js'
 
 export interface SerialPortDevice {
-	write(line: string): Promise<string>
+	write(line: string): Promise<void>
+	on(event: 'line', listener: (line: string) => void): void
 	close(): Promise<void>
 }
 
@@ -22,57 +23,27 @@ export async function createNodeSerialPort(
 		autoOpen: false,
 	})
 
-	const queue = new PQueue({concurrency: 1})
-	let currentRequest: ReturnType<typeof withResolvers<string>> | null = null
-
 	const rl = readline.createInterface({
 		input: port,
 		crlfDelay: Infinity,
 	})
 
-	let pendingLines: string[] = []
-
-	rl.on('line', (line: string) => {
-		pendingLines.push(line)
-
-		if (line === 'ok') {
-			currentRequest?.resolve(pendingLines.join('\n'))
-			pendingLines = []
-			currentRequest = null
-		} else if (line.startsWith('[')) {
-			if (pendingLines.length > 0 && pendingLines[0].startsWith('error:')) {
-				currentRequest?.reject(pendingLines.join('\n'))
-				pendingLines = []
-				currentRequest = null
-			}
-		}
-	})
-
 	await fromCallback<void>(cb => port.open(cb))
-	console.log(`Connected to ${portName}`)
 
 	return {
+		on: (_, listener) => {
+			rl.on('line', listener)
+		},
 		write: async (line: string) => {
-			const request = withResolvers<string>()
-
-			await queue.add(async () => {
-				currentRequest = request
-				const err = await fromCallback(cb => {
-					port.write(`${line}\n`, err => cb(undefined, err))
-				})
-
-				if (err) {
-					currentRequest = null
-					request.reject(err)
-				}
-
-				return request.promise
+			const err = await fromCallback(cb => {
+				port.write(`${line}\n`, err => cb(undefined, err))
 			})
 
-			return request.promise
+			if (err) {
+				throw err
+			}
 		},
 		close: async () => {
-			await queue.onIdle()
 			await fromCallback<void>(cb => port.close(cb))
 		},
 	}
@@ -84,9 +55,6 @@ export async function createWebSerialPort(
 	baudRate: number
 ): Promise<SerialPortDevice> {
 	const queue = new PQueue({concurrency: 1})
-	let currentRequest = null as ReturnType<typeof withResolvers<string>> | null
-	let pendingLines: string[] = []
-
 	await port.open({baudRate})
 
 	if (!port.writable || !port.readable) {
@@ -98,42 +66,22 @@ export async function createWebSerialPort(
 
 	const lines = createLineStream(reader)
 
-	// Read lines from the stream
+	const onLineListeners = new Set<(line: string) => void>()
+
 	;(async () => {
 		for await (const line of lines) {
-			pendingLines.push(line)
-
-			if (!currentRequest) {
-				continue
-			}
-
-			if (line === 'ok') {
-				currentRequest?.resolve(pendingLines.join('\n'))
-				pendingLines = []
-				currentRequest = null
-			} else if (line.startsWith('[')) {
-				if (pendingLines.length > 0 && pendingLines[0].startsWith('error:')) {
-					currentRequest?.reject(pendingLines.join('\n'))
-					pendingLines = []
-					currentRequest = null
-				}
-			}
+			onLineListeners.forEach(listener => listener(line))
 		}
 	})()
 
 	const encoder = new TextEncoder()
 
 	return {
+		on: (_, listener) => {
+			onLineListeners.add(listener)
+		},
 		write: async (line: string) => {
-			const request = withResolvers<string>()
-			currentRequest = request
-
-			await queue.add(async () => {
-				await writer.write(encoder.encode(line + '\n'))
-				return request.promise
-			})
-
-			return request.promise
+			await writer.write(encoder.encode(line + '\n'))
 		},
 		close: async () => {
 			await queue.onIdle()
