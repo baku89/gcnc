@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {CNCDevice, CNCDeviceWebSerialGrbl, CNCDeviceWebSocketGrbl} from 'gcnc'
 
-const deviceType = ref<'serial' | 'websocket'>('websocket')
+const deviceType = ref<'serial' | 'websocket'>(
+	import.meta.client && 'serial' in navigator ? 'serial' : 'websocket'
+)
 
 const websocketUrl = ref('ws://fluidnc.local:81')
 
@@ -23,9 +25,7 @@ async function toggleConnection() {
 		const port = await navigator.serial.requestPort()
 		cnc.value = new CNCDeviceWebSerialGrbl(port)
 	} else {
-		cnc.value = new CNCDeviceWebSocketGrbl(websocketUrl.value, {
-			checkStatusInterval: Infinity,
-		})
+		cnc.value = new CNCDeviceWebSocketGrbl(websocketUrl.value)
 	}
 
 	cnc.value.on('disconnect', () => {

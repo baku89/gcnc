@@ -35,9 +35,34 @@ button[aria-label=Search]
 	font-family var(--typography-font-display) !important
 	font-weight 500 !important
 
+header
+	.container
+		position relative
+		display flex !important
+
+	.section.center
+		flex-grow 1 !important
+		justify-content flex-end !important
+		font-family var(--typography-font-display) !important
+		
+		.link
+			transition none !important
+			background transparent !important
+			color var(--color-black) !important
+			box-shadow none !important
+
 .aside-nav, .toc
 	font-family var(--typography-font-display) !important
 
 article
 	h1, h2
 		font-weight 500 !important
+
+// Mobile
+.dialog > div
+	// box-shadow none !important
+	border-right 1px solid var(--color-gray-100) !important
+
+.docs-aside-tree
+	font-family var(--typography-font-display) !important
+
