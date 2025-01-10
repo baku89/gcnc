@@ -1,7 +1,8 @@
 body
 	--docus-body-fontFamily 'Shippori Mincho'
 	--typography-font-body 'Shippori Mincho'
-	--typography-font-display 'Inter'
+	--typography-font-monospace 'Geist Mono'
+	--typography-font-display 'Geist'
 	--elements-border-primary-static black
 	--elements-state-primary-color-primary black
 	--elements-border-primary-hover blue
@@ -10,22 +11,29 @@ body
 	--color-primary-500 blue
 	--color-primary-400 blue
 	--prose-a-color-hover blue
+	--prose-h2-letterSpacing 0
+	--docus-header-height 6rem
+
+	font-weight 500 
 
 h1.title
-	font-family var(--typography-font-display)
+	font-family var(--typography-font-display) !important
 	font-weight 500 !important
 
 .button-link, .docs-prev-next a
-	color var(--color-black) !important
+	color var(--docus-body-color) !important
 	background transparent !important
-	border 1px solid var(--color-black) !important
-	font-family var(--typography-font-display)
+	border 1px solid var(--docus-body-color) !important
+	font-family var(--typography-font-display) !important
 	font-weight 500 !important
 	transition none !important
 
 	&:hover
-		background var(--color-black) !important
-		color var(--color-white) !important
+		background var(--docus-body-color) !important
+		color var(--docus-body-backgroundColor) !important
+
+		.directory
+			color var(--color-white) !important
 
 
 button[aria-label=Search]
@@ -36,6 +44,8 @@ button[aria-label=Search]
 	font-weight 500 !important
 
 header
+	border-bottom none !important
+
 	.container
 		position relative
 		display flex !important
@@ -43,20 +53,34 @@ header
 	.section.center
 		flex-grow 1 !important
 		justify-content flex-end !important
-		font-family var(--typography-font-display) !important
+		font-family var(--typography-font-monospace) !important
 		
 		.link
 			transition none !important
 			background transparent !important
-			color var(--color-black) !important
+			color var(--docus-body-color) !important
 			box-shadow none !important
+			font-weight 400 !important
+
+			&.router-link-active
+				font-weight 600 !important
 
 .aside-nav, .toc
 	font-family var(--typography-font-display) !important
+	font-weight 400 !important
 
 article
-	h1, h2
+	h1
+		font-size 2.4rem !important
 		font-weight 500 !important
+
+	h2, h3
+		font-weight 500 !important
+	
+	h2
+		font-size 1.8rem !important
+	h3
+		font-size 1.3rem !important
 
 // Mobile
 .dialog > div
@@ -66,3 +90,6 @@ article
 .docs-aside-tree
 	font-family var(--typography-font-display) !important
 
+
+code, kbd, samp, pre
+	font-family var(--typography-font-monospace) !important

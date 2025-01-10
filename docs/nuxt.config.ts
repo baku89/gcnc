@@ -19,6 +19,11 @@ export default defineNuxtConfig({
 					type: 'image/svg+xml',
 					href: './logo.svg',
 				},
+				{
+					rel: 'stylesheet',
+					type: 'text/css',
+					href: 'https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap',
+				},
 			],
 		},
 	},

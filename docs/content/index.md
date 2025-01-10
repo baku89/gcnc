@@ -10,7 +10,7 @@ main:
 ---
 cta:
   - Get started
-  - /getting-started
+  - /introduction/getting-started
 secondary:
   - Open on GitHub →
   - https://github.com/baku89/gcnc

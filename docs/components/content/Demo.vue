@@ -103,7 +103,7 @@ button, input, select
 		cursor not-allowed
 
 .status, .messages
-	font-family 'Fira Code',monospace
+	font-family var(--typography-font-monospace)
 
 .status
 	margin-top .5rem
