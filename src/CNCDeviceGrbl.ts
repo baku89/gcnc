@@ -4,6 +4,7 @@ import {CNCDevice} from './CNCDevice.js'
 import {
 	openNodeSerialPortDevice,
 	openWebSerialPortDevice,
+	openWebSocketSerialPortDevice,
 	type SerialPortDevice,
 } from './openSerialPortDevice.js'
 import {parseGrblLog} from './parseGrblLog.js'
@@ -94,7 +95,7 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 				this.currentRequest = null
 			} else if (line.startsWith('ALARM:')) {
 				this.emit('alarm')
-			} else {
+			} else if (!line.startsWith('Grbl')) {
 				this.pendingLines.push(line)
 			}
 		})
@@ -189,5 +190,18 @@ export class CNCDeviceWebSerialGrbl extends CNCDeviceGrbl {
 
 	async createSerialPort() {
 		return openWebSerialPortDevice(this.port, this.baudRate)
+	}
+}
+
+export class CNCDeviceWebSocketGrbl extends CNCDeviceGrbl {
+	readonly url: string
+
+	constructor(url: string, options: SerialGrblCNCOptions = {}) {
+		super(options)
+		this.url = url
+	}
+
+	async createSerialPort() {
+		return openWebSocketSerialPortDevice(this.url)
 	}
 }

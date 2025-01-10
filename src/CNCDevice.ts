@@ -1,12 +1,12 @@
 import {EventEmitter} from 'eventemitter3'
 
 import {parseGCode} from './parseGCode.js'
-import {
+import type {
 	CNCLog,
-	type CNCStatus,
-	type GCode,
-	type GCodeSource,
-	type GCodeSourceLine,
+	CNCStatus,
+	GCode,
+	GCodeSource,
+	GCodeSourceLine,
 } from './type.js'
 
 interface CNCDeviceEvents {
