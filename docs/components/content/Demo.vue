@@ -8,12 +8,18 @@ const cnc = shallowRef<CNCDeviceWebSerialGrbl | null>(null)
 
 const status = ref('')
 
-async function connect() {
+async function toggleConnection() {
+	if (cnc.value) {
+		await cnc.value.close()
+		cnc.value = null
+		return
+	}
+
 	const device = await navigator.serial.requestPort()
 
 	cnc.value = new CNCDeviceWebSerialGrbl(device)
 
-	cnc.value.on('disconnected', () => {
+	cnc.value.on('disconnect', () => {
 		cnc.value = null
 	})
 
@@ -30,19 +36,28 @@ async function connect() {
 
 function sendCommand() {
 	if (!cnc.value) return
+	command.value = ''
 	cnc.value.send(command.value)
 }
 </script>
 
 <template>
 	<div>
-		<button @click="connect">Connect</button>
-		<input class="input" type="text" v-model="command" />
-		<div class="status">{{ status }}</div>
-		<button @click="sendCommand">Send</button>
+		<button @click="toggleConnection">
+			{{ cnc ? 'Disconnect' : 'Connect' }}
+		</button>
+		<input
+			class="input"
+			type="text"
+			v-model="command"
+			:disabled="!cnc"
+			@keydown.enter="sendCommand"
+		/>
+		<button @click="sendCommand" :disabled="!cnc">Send</button>
 		<ul class="messages">
 			<li v-for="(message, i) in messages" :key="i">{{ message }}</li>
 		</ul>
+		<div class="status">{{ status }}</div>
 	</div>
 </template>
 
@@ -53,4 +68,7 @@ button, input
 
 .input
 	border 1px solid black
+
+.status, .messages
+	font-family monospace
 </style>

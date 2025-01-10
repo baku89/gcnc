@@ -36,7 +36,7 @@ const argv = await yargs(hideBin(process.argv))
 	})
 	.help().argv
 
-const device = new CNCDeviceNodeSerialGrbl(argv.port, {checkStatusInterval: 50})
+const device = new CNCDeviceNodeSerialGrbl(argv.port)
 
 await device.open().catch(err => {
 	const msg = err instanceof Error ? err.message : 'Unknown error'

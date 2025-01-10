@@ -2,18 +2,21 @@ import {EventEmitter} from 'eventemitter3'
 
 import {parseGCode} from './parseGCode.js'
 import {
+	CNCLog,
+	type CNCStatus,
 	type GCode,
 	type GCodeSource,
 	type GCodeSourceLine,
-	type GrblStatus,
 } from './type.js'
 
 interface CNCDeviceEvents {
-	status: (status: GrblStatus) => void
+	status: (status: CNCStatus) => void
 	sent: (gcode: GCode, line: GCodeSourceLine) => void
-	message: (message: string) => void
-	connected: () => void
-	disconnected: () => void
+	message: (message: string, interrupted: boolean) => void
+	alarm: () => void
+	log: (log: CNCLog) => void
+	connect: () => void
+	disconnect: () => void
 }
 
 export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
@@ -30,6 +33,8 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 	 * @param axes The axes to home. If not specified, all axes will be homed.
 	 */
 	abstract home(axes?: string[]): Promise<void>
+
+	abstract reset(): Promise<void>
 
 	async sendLines(source: GCodeSource, totalLines?: number): Promise<void> {
 		console.log('Sending G-code...')

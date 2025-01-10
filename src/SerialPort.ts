@@ -82,8 +82,12 @@ export async function createWebSerialPort(
 	const encoder = new TextEncoder()
 
 	return {
-		on: (_, listener) => {
-			onLineListeners.add(listener)
+		on: (event, listener) => {
+			if (event === 'line') {
+				onLineListeners.add(listener)
+			} else if (event === 'disconnect') {
+				port.addEventListener('disconnect', () => listener(''))
+			}
 		},
 		write: async (line: string) => {
 			await writer.write(encoder.encode(line + '\n'))

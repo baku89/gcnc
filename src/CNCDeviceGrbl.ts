@@ -1,11 +1,12 @@
 import PQueue from 'p-queue'
 
 import {CNCDevice} from './CNCDevice.js'
+import {parseGrblLog} from './parseGrblLog.js'
 import {parseGrblStatus} from './parseGrblStatus.js'
 import {
 	createNodeSerialPort,
 	createWebSerialPort,
-	SerialPortDevice,
+	type SerialPortDevice,
 } from './SerialPort.js'
 import {withResolvers} from './util.js'
 
@@ -29,12 +30,13 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 	protected device?: SerialPortDevice
 	readonly baudRate: number
 	readonly checkStatusInterval: number
-	private checkStatusIntervalId?: NodeJS.Timeout
 
-	protected queue = new PQueue({concurrency: 1})
-	protected currentRequest: ReturnType<typeof withResolvers<string>> | null =
-		null
-	protected pendingLines: string[] = []
+	private checkStatusIntervalId?: NodeJS.Timeout
+	private queue = new PQueue({concurrency: 1})
+	private currentRequest: ReturnType<typeof withResolvers<string>> | null = null
+	private pendingLines: string[] = []
+	private emitMessage = true
+	private isResetting = false
 
 	constructor(options: SerialGrblCNCOptions = {}) {
 		super()
@@ -44,73 +46,107 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 
 	abstract createSerialPort(): Promise<SerialPortDevice>
 
-	private onLine(line: string) {
-		if (this.queue.size === 0) {
-			this.emit('message', line)
-			return
-		}
-
-		this.pendingLines.push(line)
-
-		if (line === 'ok') {
-			this.currentRequest?.resolve(this.pendingLines.join('\n'))
-			this.pendingLines = []
-			this.currentRequest = null
-		} else if (line.startsWith('[')) {
-			if (
-				this.pendingLines.length > 0 &&
-				this.pendingLines[0].startsWith('error:')
-			) {
-				this.currentRequest?.reject(this.pendingLines.join('\n'))
-				this.pendingLines = []
-				this.currentRequest = null
-			}
-		}
-	}
-
 	get isOpen() {
 		return this.device !== undefined
 	}
 
 	async open() {
 		this.device = await this.createSerialPort()
-		this.device.on('line', this.onLine.bind(this))
 
-		this.checkStatusIntervalId = setInterval(async () => {
-			const res = await this.send('?', false).catch(() => '')
-			if (res.endsWith('ok')) {
-				const [status] = res.split('\n')
-				const parsed = parseGrblStatus(status)
-				this.emit('status', parsed)
+		this.device.on('line', line => {
+			if (line.startsWith('ets')) {
+				// Detect Esprissif reset
+				this.queue.clear()
+				this.pendingLines = []
+				this.currentRequest = null
+				this.emitMessage = true
+				this.isResetting = true
 			}
-		}, this.checkStatusInterval)
 
-		this.emit('connected')
+			if (this.emitMessage) {
+				this.emit('message', line, this.currentRequest === null)
+			}
+
+			if (line.startsWith('[MSG:')) {
+				const log = parseGrblLog(line)
+				this.emit('log', log)
+			}
+
+			if (line.startsWith('Grbl')) {
+				this.isResetting = false
+			}
+
+			if (this.isResetting) {
+				return
+			}
+
+			if (line === 'ok' || line.startsWith('<Sleep')) {
+				if (line.startsWith('<Sleep')) {
+					this.pendingLines.push(line)
+				}
+
+				this.currentRequest?.resolve(this.pendingLines.join('\n'))
+				this.pendingLines = []
+				this.currentRequest = null
+			} else if (line.startsWith('error:')) {
+				this.currentRequest?.reject(this.pendingLines.join('\n'))
+				this.pendingLines = []
+				this.currentRequest = null
+			} else if (line.startsWith('ALARM:')) {
+				this.emit('alarm')
+			} else {
+				this.pendingLines.push(line)
+			}
+		})
+
+		this.device.on('disconnect', () => {
+			console.log('disconnected')
+			this.device = undefined
+			this.queue.clear()
+			this.emit('disconnect')
+		})
+
+		if (this.checkStatusInterval !== Infinity) {
+			this.checkStatusIntervalId = setInterval(async () => {
+				if (this.isResetting) {
+					return
+				}
+
+				const status = await this.send('?', false).catch(() => null)
+				if (status !== null) {
+					const parsed = parseGrblStatus(status)
+					this.emit('status', parsed)
+				}
+			}, this.checkStatusInterval)
+		}
+
+		this.emit('connect')
 	}
 
 	async close() {
+		console.log('close')
 		await this.queue.onIdle()
 		await this.device?.close()
 		this.device = undefined
 		clearInterval(this.checkStatusIntervalId)
 
-		this.emit('disconnected')
+		this.emit('disconnect')
 	}
 
 	async send(line: string, emitMessage = true) {
 		const request = withResolvers<string>()
-		await this.queue.add(async () => {
+
+		this.queue.add(async () => {
 			if (!this.device) throw new Error('Device not open')
 
 			this.currentRequest = request
-			await this.device.write(line).catch(err => err)
+			this.emitMessage = emitMessage
+			this.device.write(line).catch(err => err)
+			await request.promise.catch(err => err)
 		})
 
 		const message = await request.promise
-
-		if (emitMessage) {
-			this.emit('message', message)
-		}
+		this.emitMessage = true
 
 		return message
 	}
@@ -123,6 +159,10 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 				await this.send(`$H${axis.toUpperCase()}`)
 			}
 		}
+	}
+
+	async reset() {
+		await this.send('\x18')
 	}
 }
 

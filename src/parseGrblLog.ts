@@ -1,11 +1,11 @@
-import {CNCLog} from './type.js'
+import {type CNCLog} from './type.js'
 
 const logRegex = /^\s*\[MSG:(.+?)(?:: (.+?))?\]\s*$/
 
 export function parseGrblLog(line: string): CNCLog {
 	const log = logRegex.exec(line)
 	if (!log) {
-		throw new Error('Invalid log format')
+		throw new Error('Invalid log format: ' + line)
 	}
 
 	const [, type, message] = log
