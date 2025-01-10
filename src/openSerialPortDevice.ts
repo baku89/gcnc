@@ -100,6 +100,7 @@ export async function openWebSerialPortDevice(
 		close: async () => {
 			await queue.onIdle()
 			writer.releaseLock()
+			await reader.cancel()
 			reader.releaseLock()
 			await port.close()
 		},
