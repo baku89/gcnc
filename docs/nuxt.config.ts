@@ -3,11 +3,12 @@ import {defineNuxtConfig} from 'nuxt/config'
 export default defineNuxtConfig({
 	modules: ['@nuxt/content'],
 	extends: ['@nuxt-themes/docus'],
+	colorMode: {
+		preference: 'light',
+	},
+	css: ['~/assets/style.styl'],
 	content: {
 		documentDriven: true,
-		highlight: {
-			theme: 'github-dark',
-		},
 	},
 	app: {
 		baseURL: '/gcnc/',
@@ -16,7 +17,7 @@ export default defineNuxtConfig({
 				{
 					rel: 'icon',
 					type: 'image/svg+xml',
-					href: '/logo.svg',
+					href: './logo.svg',
 				},
 			],
 		},

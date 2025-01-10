@@ -1,0 +1,43 @@
+body
+	--docus-body-fontFamily 'Shippori Mincho'
+	--typography-font-body 'Shippori Mincho'
+	--typography-font-display 'Inter'
+	--elements-border-primary-static black
+	--elements-state-primary-color-primary black
+	--elements-border-primary-hover blue
+	--color-gray-100 black
+	--color-gray-500 black
+	--color-primary-500 blue
+	--color-primary-400 blue
+	--prose-a-color-hover blue
+
+h1.title
+	font-family var(--typography-font-display)
+	font-weight 500 !important
+
+.button-link, .docs-prev-next a
+	color var(--color-black) !important
+	background transparent !important
+	border 1px solid var(--color-black) !important
+	font-family var(--typography-font-display)
+	font-weight 500 !important
+	transition none !important
+
+	&:hover
+		background var(--color-black) !important
+		color var(--color-white) !important
+
+
+button[aria-label=Search]
+	display none !important
+
+.navbar-logo .title
+	font-family var(--typography-font-display) !important
+	font-weight 500 !important
+
+.aside-nav, .toc
+	font-family var(--typography-font-display) !important
+
+article
+	h1, h2
+		font-weight 500 !important

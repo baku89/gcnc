@@ -51,35 +51,62 @@ function sendCommand() {
 </script>
 
 <template>
-	<div>
-		<select v-model="deviceType">
-			<option value="serial">Serial</option>
-			<option value="websocket">WebSocket</option>
-		</select>
-		<input v-if="deviceType === 'websocket'" v-model="websocketUrl" />
-		<button @click="toggleConnection">
-			{{ cnc ? 'Disconnect' : 'Connect' }}
-		</button>
-		<input
-			type="text"
-			v-model="command"
-			:disabled="!cnc"
-			@keydown.enter="sendCommand"
-		/>
-		<button @click="sendCommand" :disabled="!cnc">Send</button>
+	<div class="Demo">
+		<div class="row">
+			<select v-model="deviceType">
+				<option value="serial">Serial</option>
+				<option value="websocket">WebSocket</option>
+			</select>
+			<input v-if="deviceType === 'websocket'" v-model="websocketUrl" />
+
+			<button @click="toggleConnection">
+				{{ cnc ? 'Disconnect' : 'Connect' }}
+			</button>
+		</div>
+		<div class="row">
+			<input
+				type="text"
+				v-model="command"
+				:disabled="!cnc"
+				@keydown.enter="sendCommand"
+			/>
+			<button @click="sendCommand" :disabled="!cnc">Send</button>
+		</div>
 		<ul class="messages">
 			<li v-for="(message, i) in messages" :key="i">{{ message }}</li>
 		</ul>
-		<div class="status">{{ status }}</div>
+		<div class="status">Status: {{ status }}</div>
 	</div>
 </template>
 
 <style lang="stylus" scoped>
 
-button, input
+.Demo
+	padding-top var(--elements-container-padding-md)
+	padding-bottom var(--elements-container-padding-md)
+	font-size 14px
+
+.row
+	display flex
+	gap 0.5rem
+
+button, input, select
 	display block
 	border 1px solid black
+	margin 0.5rem 0
+	padding 0.3rem
+	font-family var(--typography-font-display)
+	border-radius 0.2rem
+
+	&:disabled
+		opacity 0.3
+		cursor not-allowed
 
 .status, .messages
-	font-family monospace
+	font-family 'Fira Code',monospace
+
+.status
+	margin-top .5rem
+	border-top 1px solid var(--color-black)
+	padding-top .5rem
 </style>
