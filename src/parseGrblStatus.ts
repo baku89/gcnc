@@ -1,6 +1,6 @@
-import {AxesPosition, type GrblStatus} from './type.js'
+import {AxesPosition, type CNCStatus} from './type.js'
 
-export function parseGrblStatus(line: string): GrblStatus {
+export function parseGrblStatus(line: string): CNCStatus {
 	// <Run|MPos:200.000,31.070,0.000,0.000|FS:5000,0>
 	const match = line.trim().match(/^<(.+)>$/)
 	if (!match) {
@@ -11,7 +11,7 @@ export function parseGrblStatus(line: string): GrblStatus {
 	const [, content] = match
 	const fields = content.split('|')
 	const stateStr = fields[0]
-	const status: GrblStatus = parseState(stateStr)
+	const status: CNCStatus = parseState(stateStr)
 
 	// 各フィールドをパース
 	for (const field of fields.slice(1)) {
@@ -55,7 +55,7 @@ export function parseGrblStatus(line: string): GrblStatus {
 	return status
 }
 
-function parseState(state: string): GrblStatus {
+function parseState(state: string): CNCStatus {
 	const [mainState, subState] = state.split(':')
 	return {
 		state: mainState,
@@ -78,7 +78,7 @@ function parsePosition(pos: string): AxesPosition {
 	}
 }
 
-function parsePins(pins: string): GrblStatus['pins'] {
+function parsePins(pins: string): CNCStatus['pins'] {
 	return {
 		limitX: pins.includes('X'),
 		limitY: pins.includes('Y'),
@@ -91,7 +91,7 @@ function parsePins(pins: string): GrblStatus['pins'] {
 	}
 }
 
-function parseAccessories(acc: string): GrblStatus['accessories'] {
+function parseAccessories(acc: string): CNCStatus['accessories'] {
 	return {
 		spindleCW: acc.includes('S'),
 		spindleCCW: acc.includes('C'),
