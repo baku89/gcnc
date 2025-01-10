@@ -68,4 +68,8 @@ export interface CNCStatus {
 		mist: boolean // Coolant (mist)
 	}
 }
+
+export interface CNCLog {
+	type: 'error' | 'info' | 'reset'
+	message: string
 }

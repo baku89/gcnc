@@ -15,7 +15,8 @@
 		"docs:dev": "nuxt dev docs",
 		"docs:build": "nuxt build docs",
 		"docs:generate": "nuxt generate docs",
-		"docs:preview": "nuxt preview docs"
+		"docs:preview": "nuxt preview docs",
+		"test": "vitest"
 	},
 	"bin": {
 		"gcnc": "lib/cli/index.js"
@@ -59,7 +60,8 @@
 		"prettier": "^3.3.3",
 		"stylus": "^0.64.0",
 		"typescript": "^5.6.2",
-		"typescript-eslint": "^8.18.1"
+		"typescript-eslint": "^8.18.1",
+		"vitest": "^2.1.8"
 	},
 	"dependencies": {
 		"eventemitter3": "^5.0.1",
