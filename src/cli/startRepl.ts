@@ -38,6 +38,7 @@ export async function startRepl(device: CNCDevice) {
 
 	rl.on('line', async input => {
 		device.send(input).catch(err => err)
+		rl.prompt()
 	}).on('close', () => {
 		resolve()
 	})

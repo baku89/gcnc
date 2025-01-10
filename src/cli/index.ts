@@ -3,6 +3,8 @@
 import yargs from 'yargs'
 import {hideBin} from 'yargs/helpers'
 
+import {CNCDevice} from '../CNCDevice.js'
+import {CNCDeviceBambu} from '../CNCDeviceBambu.js'
 import {CNCDeviceNodeSerialGrbl} from '../CNCDeviceGrbl.js'
 import {bindWithOSC} from './bindWithOSC.js'
 import {sendFromFile} from './sendFromFile.js'
@@ -18,7 +20,6 @@ const argv = await yargs(hideBin(process.argv))
 		alias: 'p',
 		type: 'string',
 		description: 'Serial port to use',
-		demandOption: true,
 	})
 	.option('linenumber', {
 		alias: 'n',
@@ -34,13 +35,45 @@ const argv = await yargs(hideBin(process.argv))
 		type: 'string',
 		description: 'OSC host to send to',
 	})
+	.option('bambu-host', {
+		type: 'string',
+		description: 'Bambu Lab host to send to',
+	})
+	.option('bambu-access-code', {
+		type: 'string',
+		description: 'Bambu Lab access code to send to',
+	})
+	.option('bambu-serial-number', {
+		type: 'string',
+		description: 'Bambu Lab serial number to send to',
+	})
 	.help().argv
 
-const device = new CNCDeviceNodeSerialGrbl(argv.port)
+let device: CNCDevice
+
+if (argv.port) {
+	device = new CNCDeviceNodeSerialGrbl(argv.port)
+} else if (argv.bambuHost || argv.bambuAccessCode || argv.bambuSerialNumber) {
+	if (!argv.bambuHost || !argv.bambuAccessCode || !argv.bambuSerialNumber) {
+		console.error(
+			'All of bambu options (--bambu-host, --bambu-access-code, --bambu-serial-number) are required'
+		)
+		process.exit(1)
+	}
+
+	device = new CNCDeviceBambu({
+		host: argv.bambuHost,
+		accessCode: argv.bambuAccessCode,
+		serialNumber: argv.bambuSerialNumber,
+	})
+} else {
+	console.error('No device specified')
+	process.exit(1)
+}
 
 await device.open().catch(err => {
 	const msg = err instanceof Error ? err.message : 'Unknown error'
-	console.error(`Cannot open serial port ${argv.port}: ${msg}`)
+	console.error(`Cannot open the device: ${msg}`)
 	process.exit(1)
 })
 
@@ -50,7 +83,6 @@ if (argv.oscPort) {
 
 if (argv.file) {
 	await sendFromFile(device, {
-		port: argv.port,
 		filePath: argv.file,
 		startLine: argv.linenumber,
 	})

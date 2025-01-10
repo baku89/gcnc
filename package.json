@@ -65,9 +65,11 @@
 		"vitest": "^2.1.8"
 	},
 	"dependencies": {
+		"bambu-node": "^3.22.21",
 		"debounce": "^2.2.0",
 		"eventemitter3": "^5.0.1",
 		"linearly": "^0.32.0",
+		"mqtt": "^5.10.3",
 		"osc-js": "^2.4.1",
 		"p-from-callback": "^2.0.0",
 		"p-queue": "^8.0.1",

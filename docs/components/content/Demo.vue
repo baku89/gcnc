@@ -1,11 +1,21 @@
 <script setup lang="ts">
-import {CNCDevice, CNCDeviceWebSerialGrbl, CNCDeviceWebSocketGrbl} from 'gcnc'
+import {
+	CNCDevice,
+	CNCDeviceBambu,
+	CNCDeviceWebSerialGrbl,
+	CNCDeviceWebSocketGrbl,
+} from 'gcnc'
 
-const deviceType = ref<'serial' | 'websocket'>(
-	import.meta.client && 'serial' in navigator ? 'serial' : 'websocket'
+const deviceType = ref<'serial' | 'websocket' | 'bambu'>(
+	//import.meta.client && 'serial' in navigator ? 'serial' : 'websocket'
+	'bambu'
 )
 
 const websocketUrl = ref('ws://fluidnc.local:81')
+
+const bambuHost = ref('10.0.1.6')
+const bambuAccessCode = ref('30810494')
+const bambuSerialNumber = ref('0309FA440100233')
 
 const command = ref('')
 const messages = ref<string[]>([])
@@ -22,10 +32,16 @@ async function toggleConnection() {
 	}
 
 	if (deviceType.value === 'serial') {
-		const port = await navigator.serial.requestPort()
+		const port = await (navigator as any).serial.requestPort()
 		cnc.value = new CNCDeviceWebSerialGrbl(port)
-	} else {
+	} else if (deviceType.value === 'websocket') {
 		cnc.value = new CNCDeviceWebSocketGrbl(websocketUrl.value)
+	} else {
+		cnc.value = new CNCDeviceBambu({
+			host: bambuHost.value,
+			accessCode: bambuAccessCode.value,
+			serialNumber: bambuSerialNumber.value,
+		})
 	}
 
 	cnc.value.on('disconnect', () => {
@@ -56,8 +72,28 @@ function sendCommand() {
 			<select v-model="deviceType">
 				<option value="serial">Serial</option>
 				<option value="websocket">WebSocket</option>
+				<option value="bambu">Bambu Lab</option>
 			</select>
-			<input v-if="deviceType === 'websocket'" v-model="websocketUrl" />
+			<input
+				v-if="deviceType === 'websocket'"
+				v-model="websocketUrl"
+				placeholder="ws://fluidnc.local:81"
+			/>
+			<input
+				v-if="deviceType === 'bambu'"
+				v-model="bambuHost"
+				placeholder="Host"
+			/>
+			<input
+				v-if="deviceType === 'bambu'"
+				v-model="bambuAccessCode"
+				placeholder="Access Code"
+			/>
+			<input
+				v-if="deviceType === 'bambu'"
+				v-model="bambuSerialNumber"
+				placeholder="Serial Number"
+			/>
 
 			<button @click="toggleConnection">
 				{{ cnc ? 'Disconnect' : 'Connect' }}

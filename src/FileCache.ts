@@ -5,7 +5,6 @@ import {getFileHash} from './util.js'
 
 interface CacheEntry {
 	hash: string
-	port: string
 	lastLine: number
 	timestamp: number
 }
@@ -36,15 +35,14 @@ export class FileCache {
 		return getFileHash(filePath)
 	}
 
-	getLastLine(hash: string, port: string): number {
-		const entry = this.cache[`${hash}:${port}`]
+	getLastLine(hash: string): number {
+		const entry = this.cache[`${hash}`]
 		return entry?.lastLine ?? 1
 	}
 
-	setLastLine(hash: string, port: string, line: number) {
-		this.cache[`${hash}:${port}`] = {
+	setLastLine(hash: string, line: number) {
+		this.cache[`${hash}`] = {
 			hash,
-			port,
 			lastLine: line,
 			timestamp: Date.now(),
 		}
