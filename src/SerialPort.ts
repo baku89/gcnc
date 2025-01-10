@@ -6,6 +6,7 @@ import {createLineStream} from './util.js'
 export interface SerialPortDevice {
 	write(line: string): Promise<void>
 	on(event: 'line', listener: (line: string) => void): void
+	on(event: 'disconnect', listener: () => void): void
 	close(): Promise<void>
 }
 
@@ -31,8 +32,12 @@ export async function createNodeSerialPort(
 	await fromCallback<void>(cb => port.open(cb))
 
 	return {
-		on: (_, listener) => {
-			rl.on('line', listener)
+		on: (event, listener) => {
+			if (event === 'line') {
+				rl.on('line', listener)
+			} else if (event === 'disconnect') {
+				port.on('close', listener)
+			}
 		},
 		write: async (line: string) => {
 			const err = await fromCallback(cb => {
