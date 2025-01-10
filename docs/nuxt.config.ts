@@ -25,6 +25,9 @@ export default defineNuxtConfig({
 	ssr: true,
 	nitro: {
 		preset: 'github-pages',
+		prerender: {
+			failOnError: false,
+		},
 	},
 	compatibilityDate: '2025-01-04',
 	alias: {

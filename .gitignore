@@ -33,3 +33,4 @@ lerna-debug.log*
 # Nuxt
 .nuxt
 .output
+docs/dist
