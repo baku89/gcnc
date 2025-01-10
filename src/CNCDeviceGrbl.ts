@@ -1,13 +1,13 @@
 import PQueue from 'p-queue'
 
 import {CNCDevice} from './CNCDevice.js'
+import {
+	openNodeSerialPortDevice,
+	openWebSerialPortDevice,
+	type SerialPortDevice,
+} from './openSerialPortDevice.js'
 import {parseGrblLog} from './parseGrblLog.js'
 import {parseGrblStatus} from './parseGrblStatus.js'
-import {
-	createNodeSerialPort,
-	createWebSerialPort,
-	type SerialPortDevice,
-} from './SerialPort.js'
 import {withResolvers} from './util.js'
 
 interface SerialGrblCNCOptions {
@@ -175,7 +175,7 @@ export class CNCDeviceNodeSerialGrbl extends CNCDeviceGrbl {
 	}
 
 	async createSerialPort() {
-		return createNodeSerialPort(this.portName, this.baudRate)
+		return openNodeSerialPortDevice(this.portName, this.baudRate)
 	}
 }
 
@@ -188,6 +188,6 @@ export class CNCDeviceWebSerialGrbl extends CNCDeviceGrbl {
 	}
 
 	async createSerialPort() {
-		return createWebSerialPort(this.port, this.baudRate)
+		return openWebSerialPortDevice(this.port, this.baudRate)
 	}
 }

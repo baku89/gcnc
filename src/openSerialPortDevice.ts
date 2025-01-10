@@ -11,7 +11,7 @@ export interface SerialPortDevice {
 }
 
 // Node.js用のSerialPort実装
-export async function createNodeSerialPort(
+export async function openNodeSerialPortDevice(
 	portName: string,
 	baudRate: number
 ): Promise<SerialPortDevice> {
@@ -55,7 +55,7 @@ export async function createNodeSerialPort(
 }
 
 // Web Serial API用の実装
-export async function createWebSerialPort(
+export async function openWebSerialPortDevice(
 	port: SerialPort,
 	baudRate: number
 ): Promise<SerialPortDevice> {
