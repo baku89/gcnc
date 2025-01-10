@@ -23,48 +23,49 @@ export interface AxesPosition {
 	c?: number
 }
 
-export interface GrblStatus {
+export interface CNCStatus {
 	// Idle, Run, Hold, Jog, Alarm, Door, Check, Home, Sleep
 	state: string
-	// Hold:0, Hold:1, Door:0-3 などのサブステート
+	// Sub-state like Hold:0, Hold:1, Door:0-3
 	subState?: number
-	// 機械座標系の位置
+	// Machine coordinate system position
 	position: AxesPosition
-	// 作業座標系のオフセット
+	// Work coordinate system offset
 	workCoordOffset?: AxesPosition
-	// 送り速度(mm/min or inch/min)
+	// Feed rate (mm/min or inch/min)
 	feedRate: number
-	// 主軸回転数(RPM)
+	// Spindle speed (RPM)
 	spindleSpeed: number
-	// バッファの状態
+	// Buffer status
 	buffer?: {
-		planner: number // プランナーバッファの空きブロック数
-		rx: number // シリアルRXバッファの空きバイト数
+		planner: number // Number of available blocks in planner buffer
+		rx: number // Number of available bytes in serial RX buffer
 	}
-	// 実行中の行番号
+	// Current line number being executed
 	lineNumber?: number
-	// オーバーライド値(%)
+	// Override values (%)
 	override?: {
 		feed: number
 		rapid: number
 		spindle: number
 	}
-	// 入力ピンの状態
+	// Input pin states
 	pins?: {
-		limitX: boolean // X軸リミット
-		limitY: boolean // Y軸リミット
-		limitZ: boolean // Z軸リミット
-		probe: boolean // プローブ
-		door: boolean // ドア
-		hold: boolean // ホールド
-		reset: boolean // ソフトリセット
-		start: boolean // サイクルスタート
+		limitX: boolean // X axis limit
+		limitY: boolean // Y axis limit
+		limitZ: boolean // Z axis limit
+		probe: boolean // Probe
+		door: boolean // Door
+		hold: boolean // Hold
+		reset: boolean // Soft reset
+		start: boolean // Cycle start
 	}
-	// アクセサリの状態
+	// Accessory states
 	accessories?: {
-		spindleCW: boolean // 主軸CW回転
-		spindleCCW: boolean // 主軸CCW回転
-		flood: boolean // クーラント(フラッド)
-		mist: boolean // クーラント(ミスト)
+		spindleCW: boolean // Spindle clockwise rotation
+		spindleCCW: boolean // Spindle counter-clockwise rotation
+		flood: boolean // Coolant (flood)
+		mist: boolean // Coolant (mist)
 	}
+}
 }
