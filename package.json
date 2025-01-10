@@ -16,7 +16,9 @@
 		"docs:build": "nuxt build docs",
 		"docs:generate": "nuxt generate docs",
 		"docs:preview": "nuxt preview docs",
-		"test": "vitest"
+		"test": "vitest",
+		"prepare": "npm run build",
+		"postversion": "git push && git push --tags && npm publish"
 	},
 	"bin": {
 		"gcnc": "lib/cli/index.js"
