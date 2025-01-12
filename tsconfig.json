@@ -14,6 +14,7 @@
 		"declarationMap": true,
 		"skipDefaultLibCheck": true,
 		"allowJs": true,
+		"noImplicitAny": true,
 
 		/* Bundler mode */
 		"moduleResolution": "bundler",

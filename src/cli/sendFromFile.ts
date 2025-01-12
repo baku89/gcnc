@@ -8,17 +8,13 @@ import {countTotalLines} from '../util.js'
 
 export async function sendFromFile(
 	device: CNCDevice,
-	{
-		port,
-		filePath,
-		startLine = 1,
-	}: {port: string; filePath: string; startLine?: number}
+	{filePath, startLine = 1}: {filePath: string; startLine?: number}
 ) {
 	const fileCache = new FileCache()
 	await fileCache.load()
 
 	const fileHash = await fileCache.getFileHash(filePath)
-	startLine ??= fileCache.getLastLine(fileHash, port)
+	startLine ??= fileCache.getLastLine(fileHash)
 
 	const source = async (preventSkip = false): Promise<GCodeSource> => {
 		const fileStream = fs.createReadStream(filePath)
@@ -47,7 +43,7 @@ export async function sendFromFile(
 
 	device.on('sent', ({command}, {number}) => {
 		if (command === 'G0') {
-			fileCache.setLastLine(fileHash, port, number)
+			fileCache.setLastLine(fileHash, number)
 			fileCache.save().catch(console.error)
 		}
 	})
