@@ -1,4 +1,4 @@
-import mqtt, {UniqueMessageIdProvider} from 'mqtt'
+import mqtt from 'mqtt'
 import fromCallback from 'p-from-callback'
 import sleep from 'p-sleep'
 
@@ -42,7 +42,6 @@ export class CNCDeviceBambu extends CNCDevice {
 			protocolId: 'MQIsdp',
 			protocolVersion: 3,
 			rejectUnauthorized: false,
-			messageIdProvider: new UniqueMessageIdProvider(),
 		})
 
 		await fromCallback(cb => device.on('connect', () => cb(null, null)))
