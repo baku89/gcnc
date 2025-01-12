@@ -12,7 +12,7 @@ export default defineAppConfig({
 		},
 		main: {
 			padded: true,
-			fluid: true,
+			fluid: false,
 		},
 		aside: {
 			level: 1,

@@ -11,7 +11,7 @@ import {parseGrblLog} from './parseGrblLog.js'
 import {parseGrblStatus} from './parseGrblStatus.js'
 import {withResolvers} from './util.js'
 
-interface SerialGrblCNCOptions {
+export interface SerialGrblCNCOptions {
 	/**
 	 * The baud rate to use.
 	 *

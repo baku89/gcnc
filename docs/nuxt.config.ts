@@ -9,6 +9,7 @@ export default defineNuxtConfig({
 	css: ['~/assets/style.styl'],
 	content: {
 		documentDriven: true,
+		respectPathCase: false,
 	},
 	app: {
 		baseURL: '/gcnc/',

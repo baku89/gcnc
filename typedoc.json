@@ -1,0 +1,25 @@
+{
+	"$schema": "https://typedoc-plugin-markdown.org/schema.json",
+	"entryPoints": ["./src/index.ts"],
+	"plugin": ["typedoc-plugin-markdown"],
+	"out": "./docs/content/3.api",
+	"readme": "none",
+	"includeVersion": false,
+	"cleanOutputDir": true,
+	"name": "API",
+	"sort": ["alphabetical"],
+	// Markdown
+	"entryFileName": "0.index.md",
+	"hidePageHeader": true,
+	"parametersFormat": "table",
+	"interfacePropertiesFormat": "table",
+	"classPropertiesFormat": "table",
+	"enumMembersFormat": "table",
+	"propertyMembersFormat": "table",
+	"typeDeclarationFormat": "table",
+	"typeDeclarationVisibility": "compact",
+	"tableColumnSettings": {
+		"hideInherited": true,
+		"hideSources": true
+	}
+}

@@ -51,7 +51,10 @@ export class CNCDeviceBambu extends CNCDevice {
 		// subscribe to the only available topic (report)
 		this.subscribe(`device/${this.serialNumber}/report`, (payload: any) => {
 			if (payload.print.command === 'gcode_line') {
+				console.log('gcode_line', payload)
 				this.queue.resolveCurrent()
+			} else {
+				console.log('unhandled message', payload)
 			}
 		})
 

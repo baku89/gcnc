@@ -9,7 +9,7 @@ import type {
 	GCodeSourceLine,
 } from './type.js'
 
-interface CNCDeviceEvents {
+export interface CNCDeviceEvents {
 	status: (status: CNCStatus) => void
 	sent: (gcode: GCode, line: GCodeSourceLine) => void
 	message: (message: string, interrupted: boolean) => void
