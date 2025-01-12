@@ -36,6 +36,10 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 
 	abstract reset(): Promise<void>
 
+	abstract pause(): Promise<void>
+
+	abstract resume(): Promise<void>
+
 	async sendLines(source: GCodeSource, totalLines?: number): Promise<void> {
 		console.log('Sending G-code...')
 

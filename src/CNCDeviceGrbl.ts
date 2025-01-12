@@ -165,6 +165,14 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 	async reset() {
 		await this.send('\x18')
 	}
+
+	async pause() {
+		await this.send('!')
+	}
+
+	async resume() {
+		await this.send('~')
+	}
 }
 
 export class CNCDeviceNodeSerialGrbl extends CNCDeviceGrbl {

@@ -6,7 +6,14 @@ import {CNCDevice} from './CNCDevice.js'
 import {withResolvers} from './util.js'
 import {SerialQueue} from './utils/SerialQueue.js'
 
-let sequenceId = 0
+const nextSequenceId = (() => {
+	let id = 0
+	return () => id++
+})()
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
 
 /**
  * A CNCDevice implementation for Bambu Lab printers.
@@ -18,7 +25,10 @@ export class CNCDeviceBambu extends CNCDevice {
 	private serialNumber: string
 	private device?: mqtt.MqttClient
 
-	private queue = new SerialQueue<void>()
+	private queue = new SerialQueue<
+		void,
+		{sequence_id: number; command: string}
+	>()
 
 	constructor(options: {
 		host: string
@@ -49,13 +59,34 @@ export class CNCDeviceBambu extends CNCDevice {
 		this.device = device
 
 		// subscribe to the only available topic (report)
-		this.subscribe(`device/${this.serialNumber}/report`, (payload: any) => {
-			if (payload.print.command === 'gcode_line') {
-				console.log('gcode_line', payload)
-				this.queue.resolveCurrent()
-			} else {
-				console.log('unhandled message', payload)
+		this.subscribe(`device/${this.serialNumber}/report`, (payload: unknown) => {
+			if (!isPlainObject(payload)) {
+				return
 			}
+
+			const category = Object.keys(payload)[0]
+			const command = payload[category]
+
+			if (!isPlainObject(command)) {
+				return
+			}
+
+			const currentPayload = this.queue.currentPayload
+
+			if (
+				currentPayload &&
+				currentPayload.sequence_id === command.sequence_id &&
+				currentPayload.command === command.command
+			) {
+				this.queue.resolveCurrent()
+				return
+			}
+
+			if (command.command === 'push_status') {
+				return
+			}
+
+			console.log('unhandled message', payload)
 		})
 
 		// sleep for a second so the printer has time to process the subscription
@@ -64,7 +95,7 @@ export class CNCDeviceBambu extends CNCDevice {
 		this.emit('connect')
 	}
 
-	private subscribe(topic: string, callback: (payload: object) => void) {
+	private subscribe(topic: string, callback: (payload: unknown) => void) {
 		if (!this.device) {
 			throw new Error('Device not connected')
 		}
@@ -89,18 +120,27 @@ export class CNCDeviceBambu extends CNCDevice {
 		return promise
 	}
 
-	private async executeCommand(payload: unknown) {
-		await this.queue.add(async (_, reject) => {
-			if (!this.device) throw new Error('Device not connected')
+	private async executeCommand(category: string, command: string, param = '') {
+		const sequence_id = nextSequenceId()
 
-			const topic = `device/${this.serialNumber}/request`
+		await this.queue.add(
+			async (_, reject) => {
+				if (!this.device) throw new Error('Device not connected')
 
-			this.device.publish(topic, JSON.stringify(payload), error => {
-				if (error) {
-					reject(`Error publishing to topic ${topic}: ${error}`)
+				const data = {
+					[category]: {command, param, sequence_id},
 				}
-			})
-		})
+
+				const topic = `device/${this.serialNumber}/request`
+
+				this.device.publish(topic, JSON.stringify(data), error => {
+					if (error) {
+						reject(`Error publishing to topic ${topic}: ${error}`)
+					}
+				})
+			},
+			{sequence_id, command}
+		)
 	}
 
 	async send(line: string) {
@@ -108,14 +148,17 @@ export class CNCDeviceBambu extends CNCDevice {
 			throw new Error('Device not connected')
 		}
 
-		await this.executeCommand({
-			print: {
-				command: 'gcode_line',
-				sequence_id: sequenceId++,
-				param: line,
-				user_id: '1234567890',
-			},
-		})
+		if (line === '!') {
+			await this.pause()
+			return 'ok'
+		}
+
+		if (line === '~') {
+			await this.resume()
+			return 'ok'
+		}
+
+		await this.executeCommand('print', 'gcode_line', line)
 
 		return 'ok'
 	}
@@ -125,6 +168,14 @@ export class CNCDeviceBambu extends CNCDevice {
 	}
 
 	async reset() {}
+
+	async pause() {
+		await this.executeCommand('print', 'pause')
+	}
+
+	async resume() {
+		await this.executeCommand('print', 'resume')
+	}
 
 	async close() {
 		this.device = undefined
