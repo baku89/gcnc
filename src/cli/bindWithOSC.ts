@@ -49,7 +49,7 @@ export async function bindWithOSC(
 
 	// Handler for G-code transmission
 	device.on('sent', gcode => {
-		if (!osc) return
+		if (!osc || !gcode.command) return
 
 		// Notify sent command
 		const axes = [

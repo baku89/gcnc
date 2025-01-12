@@ -3,8 +3,9 @@ export interface GCode extends AxesPosition {
 	 * The command to send to the CNC machine.
 	 * e.g. `G0`, `G1`, `G90`, `G91`, etc.
 	 */
-	command: string
+	command?: string
 	feedRate?: number
+	comment?: string
 }
 
 export type GCodeSource = AsyncIterable<GCodeSourceLine>
