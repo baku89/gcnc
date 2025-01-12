@@ -5,7 +5,10 @@ import {hideBin} from 'yargs/helpers'
 
 import {CNCDevice} from '../CNCDevice.js'
 import {CNCDeviceBambu} from '../CNCDeviceBambu.js'
-import {CNCDeviceNodeSerialGrbl} from '../CNCDeviceGrbl.js'
+import {
+	CNCDeviceNodeSerialGrbl,
+	CNCDeviceWebSocketGrbl,
+} from '../CNCDeviceGrbl.js'
 import {bindWithOSC} from './bindWithOSC.js'
 import {sendFromFile} from './sendFromFile.js'
 import {startRepl} from './startRepl.js'
@@ -16,25 +19,23 @@ const argv = await yargs(hideBin(process.argv))
 		type: 'string',
 		description: 'Path to the G-code file',
 	})
-	.option('port', {
-		alias: 'p',
-		type: 'string',
-		description: 'Serial port to use',
-	})
 	.option('linenumber', {
 		alias: 'n',
 		type: 'number',
 		description: 'Line number to start from',
 	})
-	.option('osc-port', {
-		type: 'number',
-		description: 'OSC port to send to',
-	})
-	.option('osc-host', {
-		default: 'localhost',
+	// Serial port
+	.option('port', {
+		alias: 'p',
 		type: 'string',
-		description: 'OSC host to send to',
+		description: 'Serial port to use',
 	})
+	// WebSocket
+	.option('ws', {
+		type: 'string',
+		description: 'WebSocket url to send to',
+	})
+	// Bambu Lab
 	.option('bambu-host', {
 		type: 'string',
 		description: 'Bambu Lab host to send to',
@@ -47,12 +48,24 @@ const argv = await yargs(hideBin(process.argv))
 		type: 'string',
 		description: 'Bambu Lab serial number to send to',
 	})
+	// OSC
+	.option('osc-port', {
+		type: 'number',
+		description: 'OSC port to send to',
+	})
+	.option('osc-host', {
+		default: 'localhost',
+		type: 'string',
+		description: 'OSC host to send to',
+	})
 	.help().argv
 
 let device: CNCDevice
 
 if (argv.port) {
 	device = new CNCDeviceNodeSerialGrbl(argv.port)
+} else if (argv.ws) {
+	device = new CNCDeviceWebSocketGrbl(argv.ws)
 } else if (argv.bambuHost || argv.bambuAccessCode || argv.bambuSerialNumber) {
 	if (!argv.bambuHost || !argv.bambuAccessCode || !argv.bambuSerialNumber) {
 		console.error(
