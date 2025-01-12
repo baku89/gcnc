@@ -1,9 +1,14 @@
 import {type GCode} from './type.js'
 
 export function parseGCode(line: string): GCode | null {
-	const [command, ...args] = line.split(/\s+/)
+	if (line.trim() === '') {
+		return null
+	}
 
-	const parsed: GCode = {command}
+	const [gcode, comment] = line.split(';')
+	const [command, ...args] = gcode.trim().split(/\s+/)
+
+	const parsed: GCode = {command: command || undefined, comment}
 
 	for (const arg of args) {
 		const axis = arg[0].toLowerCase()
