@@ -1,5 +1,5 @@
 <div align="center">
-<img src="docs/public/logo.svg" width="200" alt="logo">
+<img src="docs/public/gcnc.svg" width="200" alt="logo">
 </div>
 
 <h1 align="center">Gcnc</h1>

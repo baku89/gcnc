@@ -1,6 +1,6 @@
 <template>
 	<div class="Logo">
-		<img class="img" src="/logo.svg" alt="logo" />
+		<img class="img" src="/gcnc.svg" alt="logo" />
 		<h1 class="title">Gcnc</h1>
 	</div>
 </template>

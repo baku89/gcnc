@@ -29,7 +29,7 @@ A universal G-code sender and CNC control library.
   ::
 
 #support
-  ![GCNC Logo](./logo.svg){.logo}
+  ![GCNC Logo](./gcnc.svg){.logo}
 ::
 
 
