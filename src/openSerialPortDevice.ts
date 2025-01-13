@@ -145,7 +145,7 @@ export async function openWebSocketSerialPortDevice(
 	const onPing = debounce(() => {
 		console.info('Ping timeout: ', url)
 		close()
-	}, 10000)
+	}, 20000)
 
 	function emitDisconnectEvent() {
 		onDisconnectListeners.forEach(listener => listener())
