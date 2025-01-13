@@ -1,4 +1,4 @@
-import {AxesPosition, type CNCStatus} from './type.js'
+import {type AxesPosition, type CNCStatus} from './type.js'
 
 export function parseGrblStatus(line: string): CNCStatus {
 	// <Run|MPos:200.000,31.070,0.000,0.000|FS:5000,0>
