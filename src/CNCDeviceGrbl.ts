@@ -42,6 +42,7 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 		this.checkStatusInterval = options.checkStatusInterval ?? 250
 	}
 
+	/**@hidden */
 	abstract createSerialPort(): Promise<SerialPortDevice>
 
 	get isOpen() {

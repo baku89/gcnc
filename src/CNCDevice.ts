@@ -40,6 +40,12 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 
 	abstract resume(): Promise<void>
 
+	/**
+	 * Send multiple lines of G-code.
+	 * @param source The source of the G-code.
+	 * @param totalLines The total number of lines to send.
+	 * @returns A promise that resolves when all lines are sent.
+	 */
 	async sendLines(source: GCodeSource, totalLines?: number): Promise<void> {
 		console.log('Sending G-code...')
 
