@@ -21,9 +21,17 @@ export default defineNuxtConfig({
 					href: './logo.svg',
 				},
 				{
+					rel: 'preconnect',
+					href: 'https://fonts.googleapis.com',
+				},
+				{
+					rel: 'preconnect',
+					href: 'https://fonts.gstatic.com',
+					crossorigin: 'anonymous',
+				},
+				{
 					rel: 'stylesheet',
-					type: 'text/css',
-					href: 'https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap',
+					href: 'https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&family=Geist:wght@100..900&display=swap',
 				},
 			],
 		},

@@ -1,13 +1,13 @@
 {
 	"$schema": "https://typedoc-plugin-markdown.org/schema.json",
 	"entryPoints": ["./src/index.ts"],
-	"plugin": ["typedoc-plugin-markdown"],
+	"plugin": ["typedoc-plugin-markdown", "./typedoc-custom-plugin.mjs"],
 	"out": "./docs/content/3.api",
 	"readme": "none",
-	"includeVersion": false,
 	"cleanOutputDir": true,
 	"name": "API",
 	"sort": ["alphabetical"],
+	"excludeExternals": false,
 	// Markdown
 	"entryFileName": "0.index.md",
 	"hidePageHeader": true,

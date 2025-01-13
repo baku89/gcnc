@@ -3,19 +3,21 @@ body
 	--typography-font-body 'Shippori Mincho'
 	--typography-font-monospace 'Geist Mono'
 	--typography-font-display 'Geist'
-	--elements-border-primary-static black
-	--elements-state-primary-color-primary black
-	--elements-border-primary-hover blue
-	--color-gray-100 black
-	--color-gray-500 black
-	--color-primary-500 blue
-	--color-primary-400 blue
-	--prose-a-color-hover blue
+	--color-gray-100 light-dark(black, white)
+	--color-gray-500 light-dark(black, white)
+	--elements-border-primary-static light-dark(black, white)
+	--elements-state-primary-color-primary light-dark(black, white)
+	--elements-border-primary-hover light-dark(black, white)
+	--color-primary-500 light-dark(blue, #4488ff)
+	--color-primary-400 light-dark(blue, #4488ff) 
+	--prose-a-color-hover light-dark(blue, #4488ff)
 	--prose-h2-letterSpacing 0
 	--prose-code-block-backgroundColor var(--docus-body-backgroundColor)
 	--prose-code-block-border-color var(--docus-body-color)
 	--prose-code-block-border-style dashed
 	--prose-p-lineHeight 1.6
+	--prose-th-color var(--docus-body-color)
+	--prose-code-inline-backgroundColor var(--docus-body-backgroundColor)
 
 	font-weight 500 
 
@@ -85,8 +87,13 @@ article
 	
 	h2
 		font-size 1.8rem !important
+
 	h3
 		font-size 1.3rem !important
+
+
+	h4
+		font-size 1.1rem !important
 
 // Mobile
 .dialog > div
@@ -99,3 +106,30 @@ article
 
 code, kbd, samp, pre
 	font-family var(--typography-font-monospace) !important
+
+strong
+	font-family inherit !important
+
+
+[data-content-id^="content:3.api"]
+	.source-link
+		&, & a
+			font-family var(--typography-font-monospace) !important
+
+	blockquote
+		&, & *
+			font-family var(--typography-font-monospace) !important
+
+		code
+			padding 0 !important
+	
+	h4[id^="returns"]
+		margin-top var(--prose-p-margin)
+		border-bottom-width 1px
+		border-bottom-style solid
+		border-bottom-color var(--prose-thead-borderBottom-color)
+		padding var(--prose-th-padding)
+		padding-left 0
+		font-size var(--prose-table-fontSize) !important
+		font-weight var(--prose-th-fontWeight) !important
+
