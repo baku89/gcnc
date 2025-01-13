@@ -71,12 +71,9 @@ export class CNCDeviceBambu extends CNCDevice {
 				return
 			}
 
-			const currentPayload = this.queue.currentPayload
-
 			if (
-				currentPayload &&
-				currentPayload.sequence_id === command.sequence_id &&
-				currentPayload.command === command.command
+				this.queue.currentPayload?.sequence_id === command.sequence_id &&
+				this.queue.currentPayload?.command === command.command
 			) {
 				this.queue.resolveCurrent()
 				return
@@ -178,6 +175,8 @@ export class CNCDeviceBambu extends CNCDevice {
 	}
 
 	async close() {
+		await this.queue.waitUntilSettled()
+		await this.device?.endAsync()
 		this.device = undefined
 	}
 }

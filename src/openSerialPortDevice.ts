@@ -1,6 +1,5 @@
 import debounce from 'debounce'
 import fromCallback from 'p-from-callback'
-import PQueue from 'p-queue'
 
 import {createLineStream} from './util.js'
 
@@ -64,7 +63,6 @@ export async function openWebSerialPortDevice(
 	port: SerialPort,
 	baudRate: number
 ): Promise<SerialPortDevice> {
-	const queue = new PQueue({concurrency: 1})
 	await port.open({baudRate})
 
 	if (!port.writable || !port.readable) {
@@ -98,7 +96,6 @@ export async function openWebSerialPortDevice(
 			await writer.write(encoder.encode(line + '\n'))
 		},
 		close: async () => {
-			await queue.onIdle()
 			writer.releaseLock()
 			await reader.cancel()
 			reader.releaseLock()

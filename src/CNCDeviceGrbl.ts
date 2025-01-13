@@ -1,5 +1,3 @@
-import PQueue from 'p-queue'
-
 import {CNCDevice} from './CNCDevice.js'
 import {
 	openNodeSerialPortDevice,
@@ -9,7 +7,7 @@ import {
 } from './openSerialPortDevice.js'
 import {parseGrblLog} from './parseGrblLog.js'
 import {parseGrblStatus} from './parseGrblStatus.js'
-import {withResolvers} from './util.js'
+import {SerialQueue} from './utils/SerialQueue.js'
 
 export interface SerialGrblCNCOptions {
 	/**
@@ -33,8 +31,7 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 	readonly checkStatusInterval: number
 
 	private checkStatusIntervalId?: NodeJS.Timeout
-	private queue = new PQueue({concurrency: 1})
-	private currentRequest: ReturnType<typeof withResolvers<string>> | null = null
+	private queue = new SerialQueue<string>()
 	private pendingLines: string[] = []
 	private emitMessage = true
 	private isResetting = false
@@ -59,13 +56,12 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 				// Detect Esprissif reset
 				this.queue.clear()
 				this.pendingLines = []
-				this.currentRequest = null
 				this.emitMessage = true
 				this.isResetting = true
 			}
 
 			if (this.emitMessage) {
-				this.emit('message', line, this.currentRequest === null)
+				this.emit('message', line, this.queue.isRunning)
 			}
 
 			if (line.startsWith('[MSG:')) {
@@ -86,13 +82,11 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 					this.pendingLines.push(line)
 				}
 
-				this.currentRequest?.resolve(this.pendingLines.join('\n'))
+				this.queue.resolveCurrent(this.pendingLines.join('\n'))
 				this.pendingLines = []
-				this.currentRequest = null
 			} else if (line.startsWith('error:')) {
-				this.currentRequest?.reject(this.pendingLines.join('\n'))
+				this.queue.rejectCurrent(this.pendingLines.join('\n'))
 				this.pendingLines = []
-				this.currentRequest = null
 			} else if (line.startsWith('ALARM:')) {
 				this.emit('alarm')
 			} else if (!line.startsWith('Grbl')) {
@@ -125,8 +119,7 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 	}
 
 	async close() {
-		console.log('close')
-		await this.queue.onIdle()
+		await this.queue.waitUntilSettled()
 		await this.device?.close()
 		this.device = undefined
 		clearInterval(this.checkStatusIntervalId)
@@ -135,18 +128,13 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 	}
 
 	async send(line: string, emitMessage = true) {
-		const request = withResolvers<string>()
-
-		this.queue.add(async () => {
+		const message = await this.queue.add(async () => {
 			if (!this.device) throw new Error('Device not open')
 
-			this.currentRequest = request
 			this.emitMessage = emitMessage
 			this.device.write(line).catch(err => err)
-			await request.promise.catch(err => err)
 		})
 
-		const message = await request.promise
 		this.emitMessage = true
 
 		return message

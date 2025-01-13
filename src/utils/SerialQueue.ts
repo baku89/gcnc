@@ -10,6 +10,10 @@ interface Queue<T, U> {
 	reject: (reason?: unknown) => void
 	payload: U
 }
+
+/**
+ * Manages device communication using a queue. Commands added to the queue are executed sequentially until the queue is empty. The queue advances when `resolveCurrent` or `rejectCurrent` is called in response to device responses.
+ */
 export class SerialQueue<T, U = void> {
 	private queues: Queue<T, U>[] = []
 
@@ -17,6 +21,13 @@ export class SerialQueue<T, U = void> {
 
 	get isRunning() {
 		return this.runningQueue !== undefined
+	}
+
+	/**
+	 * The size of the queue including the running queue
+	 */
+	get size() {
+		return this.queues.length + (this.runningQueue ? 1 : 0)
 	}
 
 	get currentPayload(): U | undefined {
@@ -61,12 +72,17 @@ export class SerialQueue<T, U = void> {
 		return Promise.allSettled(this.queues.map(queue => queue.promise))
 	}
 
+	clear() {
+		this.queues = []
+		this.runningQueue?.reject()
+		this.runningQueue = undefined
+	}
+
 	private async proceed() {
 		if (this.runningQueue) return
 
 		this.runningQueue = this.queues.shift()
-		if (!this.runningQueue) return
 
-		this.runningQueue.fn(this.runningQueue.resolve, this.runningQueue.reject)
+		this.runningQueue?.fn(this.runningQueue.resolve, this.runningQueue.reject)
 	}
 }

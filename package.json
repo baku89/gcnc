@@ -46,7 +46,6 @@
 		"@nuxt-themes/docus": "^1.15.1",
 		"@nuxt/content": "^2.13.4",
 		"@types/node": "^22.10.2",
-		"@types/p-queue": "^3.2.1",
 		"@types/w3c-web-serial": "^1.0.7",
 		"@types/yargs": "^17.0.33",
 		"@typescript-eslint/eslint-plugin": "^8.6.0",
@@ -74,7 +73,6 @@
 		"mqtt": "^5.10.3",
 		"osc-js": "^2.4.1",
 		"p-from-callback": "^2.0.0",
-		"p-queue": "^8.0.1",
 		"p-sleep": "^1.1.0",
 		"serialport": "^12.0.0",
 		"yargs": "^17.7.2"
