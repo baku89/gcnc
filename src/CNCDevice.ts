@@ -13,7 +13,6 @@ export interface CNCDeviceEvents {
 	status: (status: CNCStatus) => void
 	sent: (gcode: GCode, line: GCodeSourceLine) => void
 	message: (message: string, interrupted: boolean) => void
-	alarm: () => void
 	log: (log: CNCLog) => void
 	connect: () => void
 	disconnect: () => void
@@ -26,7 +25,7 @@ export abstract class CNCDevice extends EventEmitter<CNCDeviceEvents> {
 
 	abstract close(): Promise<void>
 
-	abstract send(line: string, emitMessage?: boolean): Promise<string>
+	abstract send(line: string, emitMessage?: boolean): Promise<void>
 
 	/**
 	 * Run the homing sequence.

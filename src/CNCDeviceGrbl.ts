@@ -1,4 +1,4 @@
-import 'w3c-web-serial'
+import fromCallback from 'p-from-callback'
 
 import {CNCDevice} from './CNCDevice.js'
 import {
@@ -9,6 +9,7 @@ import {
 } from './openSerialPortDevice.js'
 import {parseGrblLog} from './parseGrblLog.js'
 import {parseGrblStatus} from './parseGrblStatus.js'
+import {CNCStatus} from './type.js'
 import {SerialQueue} from './utils/SerialQueue.js'
 
 export interface SerialGrblCNCOptions {
@@ -32,11 +33,10 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 	readonly baudRate: number
 	readonly checkStatusInterval: number
 
-	private checkStatusIntervalId?: NodeJS.Timeout
-	private queue = new SerialQueue<string>()
-	private pendingLines: string[] = []
+	private queue = new SerialQueue()
 	private emitMessage = true
-	private isResetting = false
+
+	private state: null | string = null
 
 	constructor(options: SerialGrblCNCOptions = {}) {
 		super()
@@ -53,94 +53,99 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 
 	async open() {
 		this.device = await this.createSerialPort()
+		this.queue = new SerialQueue()
 
 		this.device.on('line', line => {
+			// Handle reset (detect Espressif reset)
 			if (line.startsWith('ets')) {
-				// Detect Esprissif reset
 				this.queue.clear()
-				this.pendingLines = []
 				this.emitMessage = true
-				this.isResetting = true
+				this.state = 'resetting'
 			}
 
+			// Output message
 			if (this.emitMessage) {
-				this.emit('message', line, this.queue.isRunning)
+				this.emit('message', line, this.queue.isPending)
 			}
 
+			// Handle log
 			if (line.startsWith('[MSG:')) {
 				const log = parseGrblLog(line)
 				this.emit('log', log)
-			}
-
-			if (line.startsWith('Grbl')) {
-				this.isResetting = false
-			}
-
-			if (this.isResetting) {
 				return
 			}
 
-			if (line === 'ok' || line.startsWith('<Sleep')) {
-				if (line.startsWith('<Sleep')) {
-					this.pendingLines.push(line)
-				}
+			// Handle status
+			if (line.startsWith('<')) {
+				this.onReceiveStatus(line)
+			}
 
-				this.queue.resolveCurrent(this.pendingLines.join('\n'))
-				this.pendingLines = []
+			// Grbl initialization complete
+			if (line.startsWith('Grbl')) {
+				this.state = null
+			}
+
+			if (this.state === 'resetting') {
+				return
+			}
+
+			// Handle response
+			if (line === 'ok' || line.startsWith('<Sleep')) {
+				this.queue.resolvePending()
 			} else if (line.startsWith('error:')) {
-				this.queue.rejectCurrent(this.pendingLines.join('\n'))
-				this.pendingLines = []
+				this.queue.clear()
 			} else if (line.startsWith('ALARM:')) {
-				this.emit('alarm')
-			} else if (!line.startsWith('Grbl')) {
-				this.pendingLines.push(line)
+				this.queue.clear()
 			}
 		})
 
 		this.device.on('disconnect', () => {
-			console.log('disconnected')
+			this.queue.terminate()
 			this.device = undefined
-			this.queue.clear()
 			this.emit('disconnect')
 		})
 
 		if (this.checkStatusInterval !== Infinity) {
-			this.checkStatusIntervalId = setInterval(async () => {
-				if (this.isResetting) {
-					return
-				}
-
-				const status = await this.send('?', false).catch(() => null)
-				if (status !== null) {
-					const parsed = parseGrblStatus(status)
-					this.emit('status', parsed)
-				}
+			this.queue.addRecurring(async () => {
+				this.checkState()
 			}, this.checkStatusInterval)
 		}
+
+		this.checkState()
+
+		await fromCallback<void>(cb => this.once('status', () => cb(null)))
 
 		this.emit('connect')
 	}
 
 	async close() {
-		await this.queue.waitUntilSettled()
+		await this.queue?.terminate()
 		await this.device?.close()
 		this.device = undefined
-		clearInterval(this.checkStatusIntervalId)
+		this.state = null
 
 		this.emit('disconnect')
 	}
 
 	async send(line: string, emitMessage = true) {
-		const message = await this.queue.add(async () => {
-			if (!this.device) throw new Error('Device not open')
+		if (this.state === 'resetting') {
+			throw new Error('Device is resetting')
+		}
 
-			this.emitMessage = emitMessage
-			this.device.write(line).catch(err => err)
-		})
+		if (this.state === 'sleep' && line !== '?' && line !== '\x18') {
+			throw new Error('Device is sleeping')
+		}
 
-		this.emitMessage = true
+		await this.queue
+			.add(async () => {
+				if (!this.device) throw new Error('Device not open')
 
-		return message
+				this.emitMessage = emitMessage
+				this.device.write(`${line}`).catch(err => err)
+			})
+			.finally(() => {
+				this.emitMessage = true
+			})
 	}
 
 	async home(axes?: string[]) {
@@ -155,14 +160,43 @@ export abstract class CNCDeviceGrbl extends CNCDevice {
 
 	async reset() {
 		await this.send('\x18')
+		this.checkState()
+	}
+
+	async sleep() {
+		await this.send('$SLP')
+		await this.checkState()
+	}
+
+	async unlock() {
+		await this.send('$X')
+		this.checkState()
 	}
 
 	async pause() {
 		await this.send('!')
+		this.checkState()
 	}
 
 	async resume() {
 		await this.send('~')
+		this.checkState()
+	}
+
+	private async checkState() {
+		if (this.state === 'resetting') return
+
+		this.send('?', false).catch(() => null)
+
+		return await fromCallback<CNCStatus>(cb =>
+			this.once('status', status => cb(null, status))
+		)
+	}
+
+	private onReceiveStatus(line: string) {
+		const parsed = parseGrblStatus(line)
+		this.state = parsed.state
+		this.emit('status', parsed)
 	}
 }
 

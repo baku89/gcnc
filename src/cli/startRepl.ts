@@ -18,6 +18,13 @@ export async function startRepl(device: CNCDevice) {
 
 	device.on('message', message => {
 		// Clear the line and print the message
+
+		message = message.replace(/MSG/, styleText('gray', 'MSG'))
+		message = message.replace(/info|idle|sleep|run/i, m =>
+			styleText('green', m)
+		)
+		message = message.replace(/alarm|error/i, m => styleText('red', m))
+
 		process.stdout.write('\r' + message + '\n')
 		rl.prompt()
 	})
@@ -31,12 +38,12 @@ export async function startRepl(device: CNCDevice) {
 	// Detect Ctrl-X (Reset)
 	process.stdin.on('keypress', async (_, key) => {
 		if (key.ctrl && key.name === 'x') {
-			process.stdout.write('^X')
-			await device.reset()
+			process.stdout.write('^X\n')
+			device.reset().catch(err => err)
 		}
 	})
 
-	rl.on('line', async input => {
+	rl.on('line', input => {
 		device.send(input).catch(err => err)
 		rl.prompt()
 	}).on('close', () => {

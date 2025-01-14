@@ -75,7 +75,7 @@ export class CNCDeviceBambu extends CNCDevice {
 				this.queue.currentPayload?.sequence_id === command.sequence_id &&
 				this.queue.currentPayload?.command === command.command
 			) {
-				this.queue.resolveCurrent()
+				this.queue.resolvePending()
 				return
 			}
 
@@ -147,17 +147,15 @@ export class CNCDeviceBambu extends CNCDevice {
 
 		if (line === '!') {
 			await this.pause()
-			return 'ok'
+			return
 		}
 
 		if (line === '~') {
 			await this.resume()
-			return 'ok'
+			return
 		}
 
 		await this.executeCommand('print', 'gcode_line', line)
-
-		return 'ok'
 	}
 
 	async home() {
@@ -175,7 +173,7 @@ export class CNCDeviceBambu extends CNCDevice {
 	}
 
 	async close() {
-		await this.queue.waitUntilSettled()
+		await this.queue.onIdle()
 		await this.device?.endAsync()
 		this.device = undefined
 	}

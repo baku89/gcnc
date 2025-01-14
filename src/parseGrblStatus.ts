@@ -58,7 +58,7 @@ export function parseGrblStatus(line: string): CNCStatus {
 function parseState(state: string): CNCStatus {
 	const [mainState, subState] = state.split(':')
 	return {
-		state: mainState,
+		state: mainState.toLowerCase(),
 		subState: subState ? Number(subState) : undefined,
 		position: {x: 0},
 		feedRate: 0,
