@@ -1,3 +1,5 @@
+import 'w3c-web-serial'
+
 import {CNCDevice} from './CNCDevice.js'
 import {
 	openNodeSerialPortDevice,
