@@ -1,5 +1,3 @@
-import 'w3c-web-serial'
-
 import debounce from 'debounce'
 import fromCallback from 'p-from-callback'
 
