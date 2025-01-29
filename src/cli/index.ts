@@ -24,6 +24,13 @@ const argv = await yargs(hideBin(process.argv))
 		type: 'number',
 		description: 'Line number to start from',
 	})
+	// One-liner options
+	.option('run', {
+		alias: 'r',
+		type: 'string',
+		description:
+			'Run a one-liner command. Multiple commands can be separated by `&`',
+	})
 	// Serial port
 	.option('port', {
 		alias: 'p',
@@ -94,7 +101,12 @@ if (argv.oscPort) {
 	await bindWithOSC(device, {port: argv.oscPort, host: argv.oscHost})
 }
 
-if (argv.file) {
+if (argv.run) {
+	const commands = argv.run.split('&').map(cmd => cmd.trim())
+	for (const command of commands) {
+		await device.send(command)
+	}
+} else if (argv.file) {
 	await sendFromFile(device, {
 		filePath: argv.file,
 		startLine: argv.linenumber,
